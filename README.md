@@ -1,6 +1,6 @@
 # Records+
 
-A new Flutter project.
+Flutter project for recordings.
 
 ## Getting Started
 
