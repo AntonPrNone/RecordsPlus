@@ -1,0 +1,8 @@
+Пакеты:
+    flutter pub add firebase_auth
+    flutter pub add cloud_firestore
+    flutter pub add provider
+    flutter pub add fluttertoast
+    flutter pub add firebase_core
+    flutter pub add firebase_core_desktop
+ 
