@@ -6,3 +6,5 @@
     flutter pub add firebase_core
     flutter pub add firebase_core_desktop
  
+ Ключ-токен:
+    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
