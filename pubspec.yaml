@@ -47,6 +47,7 @@ dependencies:
   animated_radial_menu: ^0.0.1
   url_launcher: ^6.1.11
   youtube_player_iframe: ^4.0.4
+  page_transition: ^2.1.0
 
 dev_dependencies:
   flutter_test:

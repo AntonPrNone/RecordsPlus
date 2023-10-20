@@ -188,50 +188,55 @@ class AuthPageState extends State<AuthPage> {
     );
   }
 
-  Widget inputLogin(
-      // Поле ввода
-      Icon icon,
-      String hint,
-      TextEditingController controller,
-      bool obscure) {
-    return Container(
-      padding: const EdgeInsets.only(left: 20, right: 20),
-      child: TextField(
-        controller: controller,
-        obscureText: obscure && obscurePassword,
-        style: const TextStyle(fontSize: 20, color: Colors.white),
-        decoration: InputDecoration(
-          hintStyle: const TextStyle(
-              fontWeight: FontWeight.bold, fontSize: 20, color: Colors.white30),
-          hintText: hint,
-          focusedBorder: const OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.white, width: 3)),
-          enabledBorder: const OutlineInputBorder(
-              borderSide: BorderSide(color: Colors.white54, width: 1)),
-          prefixIcon: Padding(
-            padding: const EdgeInsets.only(left: 10, right: 10),
-            child: IconTheme(
-              data: const IconThemeData(color: Colors.white),
-              child: icon,
-            ),
+Widget inputLogin(Icon icon, String hint, TextEditingController controller, bool obscure) {
+  return Container(
+    padding: const EdgeInsets.only(left: 20, right: 20),
+    child: TextFormField(
+      controller: controller,
+      obscureText: obscure && obscurePassword,
+      style: const TextStyle(fontSize: 20, color: Colors.white),
+      decoration: InputDecoration(
+        hintStyle: const TextStyle(
+            fontWeight: FontWeight.bold, fontSize: 20, color: Colors.white30),
+        hintText: hint,
+        focusedBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.white, width: 3)),
+        enabledBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: Colors.white54, width: 1)),
+        prefixIcon: Padding(
+          padding: const EdgeInsets.only(left: 10, right: 10),
+          child: IconTheme(
+            data: const IconThemeData(color: Colors.white),
+            child: icon,
           ),
-          suffixIcon: obscure
-              ? IconButton(
-                  icon: Icon(
-                    obscurePassword ? Icons.visibility : Icons.visibility_off,
-                    color: Colors.white,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      obscurePassword = !obscurePassword;
-                    });
-                  },
-                )
-              : null,
         ),
+        suffixIcon: obscure
+            ? IconButton(
+                icon: Icon(
+                  obscurePassword ? Icons.visibility : Icons.visibility_off,
+                  color: Colors.white,
+                ),
+                onPressed: () {
+                  setState(() {
+                    obscurePassword = !obscurePassword;
+                  });
+                },
+              )
+            : null,
       ),
-    );
-  }
+      onFieldSubmitted: (value) async {
+        if (value.isNotEmpty) {
+          // Выполнить проверку данных, если поле не пустое
+          authButtonAction(await authService.signInWithEmailAndPassword(
+            emailController.text.trim(),
+            passwordController.text.trim(),
+          ));
+        }
+      },
+    ),
+  );
+}
+
 
   Widget button(String text, void Function() func) {
     // Кнопка авторизации

@@ -39,9 +39,11 @@ class _RandomPointsPainterState extends State<RandomPointsPainter> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      setState(() {
-        _points = _generatePoints(MediaQuery.of(context).size);
-      });
+      if (mounted) {
+        setState(() {
+          _points = _generatePoints(MediaQuery.of(context).size);
+        });
+      }
     });
   }
 }

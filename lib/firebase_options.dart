@@ -25,17 +25,11 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
         return windows;
       case TargetPlatform.linux:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for linux - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return linux;
       default:
         throw UnsupportedError(
           'DefaultFirebaseOptions are not supported for this platform.',
@@ -45,7 +39,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyD1WT_xiBSbQ1Ky41jVcf3g7_pagpO7Wac',
-    appId: '1:987180946645:web:ba4f18aa65f24c20e7be5c',
+    appId: '1:987180946645:web:39ecf9f592ca8636e7be5c',
     messagingSenderId: '987180946645',
     projectId: 'example-8418d',
     authDomain: 'example-8418d.firebaseapp.com',
@@ -70,9 +64,27 @@ class DefaultFirebaseOptions {
     iosBundleId: 'com.example.example',
   );
 
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyCrbLeIShnYg-EIXHAo9Jf6BY_U-TlIUrU',
+    appId: '1:987180946645:ios:78e4e36aaf0a1c68e7be5c',
+    messagingSenderId: '987180946645',
+    projectId: 'example-8418d',
+    storageBucket: 'example-8418d.appspot.com',
+    iosBundleId: 'com.example.example.RunnerTests',
+  );
+
   static const FirebaseOptions windows = FirebaseOptions(
     apiKey: 'AIzaSyD1WT_xiBSbQ1Ky41jVcf3g7_pagpO7Wac',
-    appId: '1:987180946645:web:39ecf9f592ca8636e7be5c',
+    appId: '1:987180946645:web:2ac45664c516beade7be5c',
+    messagingSenderId: '987180946645',
+    projectId: 'example-8418d',
+    authDomain: 'example-8418d.firebaseapp.com',
+    storageBucket: 'example-8418d.appspot.com',
+  );
+
+  static const FirebaseOptions linux = FirebaseOptions(
+    apiKey: 'AIzaSyD1WT_xiBSbQ1Ky41jVcf3g7_pagpO7Wac',
+    appId: '1:987180946645:web:7024f7f28eee867ce7be5c',
     messagingSenderId: '987180946645',
     projectId: 'example-8418d',
     authDomain: 'example-8418d.firebaseapp.com',
