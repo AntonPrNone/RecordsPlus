@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:intl/intl.dart';
+import 'package:records_plus/Screens/StatisticPage.dart';
 import '../RandomPointsPainter.dart';
 import 'AuthPage.dart';
 import '/Services/AuthService.dart';
@@ -78,7 +79,7 @@ class HomePageState extends State<HomePage>
       backgroundColor: Colors.grey[900],
       body: Stack(children: [
         RandomPointsPainter(
-          color: Colors.white,
+          color: Colors.blue,
         ),
         PageView(
           controller: _pageController,
@@ -148,7 +149,7 @@ class HomePageState extends State<HomePage>
                           child: Icon(Icons.delete, color: Colors.white),
                         ),
                         child: Card(
-                          color: Color.fromARGB(255, 30, 30, 30),
+                          color: Color.fromARGB(255, 26, 26, 26),
                           margin: const EdgeInsets.all(10.0),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10.0),
@@ -161,7 +162,7 @@ class HomePageState extends State<HomePage>
                             leading: CircleAvatar(
                               backgroundColor: Colors.grey[800],
                               child: Text(
-                                (index + 1).toString(),
+                                '#${index + 1}',
                                 style: TextStyle(
                                     color: Colors.lightBlue,
                                     fontWeight: FontWeight.bold),
@@ -244,33 +245,7 @@ class HomePageState extends State<HomePage>
                       );
                     },
                   ),
-            Container(
-              padding: EdgeInsets.all(10.0),
-              child: GridView.count(
-                crossAxisCount: 4,
-                children: List.generate(_apps.length, (index) {
-                  Color color =
-                      Color((Random().nextDouble() * 0xFFFFFF).toInt())
-                          .withOpacity(1.0);
-                  return Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          _apps[index].icon,
-                          color: color,
-                        ),
-                        SizedBox(height: 3),
-                        Text(
-                          _apps[index].name,
-                          style: TextStyle(color: color),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
-              ),
-            ),
+            StatisticPage()
           ],
           onPageChanged: (int index) {
             setState(() {
@@ -328,7 +303,7 @@ class HomePageState extends State<HomePage>
             child: Container(
               margin: EdgeInsets.only(left: 20, right: 10),
               child: Text(
-                'Home',
+                _currentTabIndex == 0 ? 'Home' : 'Stats ',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
             ),
@@ -439,7 +414,7 @@ class HomePageState extends State<HomePage>
     // Нижняя панель-меню
     const BottomNavigationBarItem(
         icon: Icon(Icons.notes_outlined), label: 'Записи'),
-    const BottomNavigationBarItem(icon: Icon(Icons.alarm), label: 'TabRandom'),
+    const BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Статистика'),
   ];
 
   Future<void> loadTitlesAndSubtitles() async {
