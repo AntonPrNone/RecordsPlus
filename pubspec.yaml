@@ -48,6 +48,10 @@ dependencies:
   url_launcher: ^6.1.11
   youtube_player_iframe: ^4.0.4
   page_transition: ^2.1.0
+  audioplayers: ^5.2.1
+  just_audio: ^0.9.36
+  flutter_sound: ^9.2.13
+  permission_handler: ^11.1.0
 
 dev_dependencies:
   flutter_test:

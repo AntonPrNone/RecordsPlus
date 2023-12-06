@@ -31,6 +31,7 @@ class HomePageState extends State<HomePage>
 
   List<String> titles = [];
   List<String> subtitles = [];
+  List<bool> isCheckedList = [];
   List<int> dates = [];
   List<String> recordIds = [];
 
@@ -132,117 +133,167 @@ class HomePageState extends State<HomePage>
                       final formattedDate =
                           DateFormat.yMMMMd('ru').add_jms().format(date);
                       return Dismissible(
-                        key: UniqueKey(),
-                        onDismissed: (direction) {
-                          if (direction == DismissDirection.endToStart) {
-                            deleteRecord(itemIndex);
-                          }
-                        },
-                        direction: DismissDirection.endToStart,
-                        background: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            borderRadius: BorderRadius.circular(16.0),
+                          key: UniqueKey(),
+                          onDismissed: (direction) {
+                            if (direction == DismissDirection.endToStart) {
+                              deleteRecord(itemIndex);
+                            }
+                          },
+                          direction: DismissDirection.endToStart,
+                          background: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(16.0),
+                            ),
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.only(right: 16.0),
+                            child: Icon(Icons.delete, color: Colors.white),
                           ),
-                          alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.only(right: 16.0),
-                          child: Icon(Icons.delete, color: Colors.white),
-                        ),
-                        child: Card(
-                          color: Color.fromARGB(255, 26, 26, 26),
-                          margin: const EdgeInsets.all(10.0),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.0),
-                          ),
-                          elevation: 4.0,
-                          child: ListTile(
-                            onTap: () {
-                              editRecord(index);
-                            },
-                            leading: CircleAvatar(
-                              backgroundColor: Colors.grey[800],
-                              child: Text(
-                                '#${index + 1}',
-                                style: TextStyle(
-                                    color: Colors.lightBlue,
-                                    fontWeight: FontWeight.bold),
-                              ),
+                          child: Card(
+                            surfaceTintColor: Color.fromARGB(0, 0, 0, 0),
+                            color: Color.fromARGB(150, 20, 20, 20),
+                            margin: const EdgeInsets.all(10.0),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10.0),
                             ),
-                            title: Text(
-                              titles[itemIndex],
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16.0,
-                                color: Colors.white,
-                              ),
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  subtitles[itemIndex],
-                                  style: TextStyle(
-                                    color: Colors.grey[400],
-                                  ),
-                                ),
-                                const SizedBox(
-                                  height: 10,
-                                ),
-                                Text(
-                                  'Создано: $formattedDate',
-                                  style: TextStyle(
-                                      color: Colors.grey[400],
-                                      fontSize: 10.0,
-                                      fontStyle: FontStyle.italic),
-                                ),
-                              ],
-                            ),
-                            trailing: IconButton(
-                              icon: Icon(Icons.delete,
-                                  color: Color.fromARGB(255, 143, 10, 0)),
-                              onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      backgroundColor:
-                                          const Color.fromARGB(255, 22, 22, 22),
-                                      title: Text(
-                                        'Подтвердите удаление',
-                                        style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold),
-                                      ),
-                                      content: Text(
-                                        'Вы действительно хотите удалить эту запись?',
-                                        style: TextStyle(color: Colors.white),
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          child: Text('Отмена'),
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                          },
-                                        ),
-                                        TextButton(
-                                          child: Text(
-                                            'Удалить',
-                                            style: TextStyle(color: Colors.red),
-                                          ),
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                            deleteRecord(index);
-                                          },
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                );
+                            elevation: 4.0,
+                            child: InkWell(
+                              onTap: () {
+                                editRecord(index);
                               },
+                              child: Padding(
+                                padding: const EdgeInsets.all(10.0),
+                                child: Row(
+                                  children: [
+                                    Checkbox(
+                                      value: isCheckedList[itemIndex],
+                                      onChanged: (bool? value) {
+                                        setState(() {
+                                          isCheckedList[itemIndex] =
+                                              value ?? false;
+                                          firestoreService.updateCheckboxState(
+                                              recordIds[itemIndex],
+                                              isCheckedList[itemIndex]);
+                                        });
+                                      },
+                                    ),
+                                    SizedBox(
+                                        width:
+                                            10.0), // Добавлен отступ между чекбоксом и текстом
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          RichText(
+                                            text: TextSpan(
+                                              text: titles[itemIndex],
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16.0,
+                                                color: isCheckedList[itemIndex]
+                                                    ? Colors.grey[400]
+                                                    : null,
+                                                decoration:
+                                                    isCheckedList[itemIndex]
+                                                        ? TextDecoration
+                                                            .lineThrough
+                                                        : TextDecoration.none,
+                                                fontStyle:
+                                                    isCheckedList[itemIndex]
+                                                        ? FontStyle.italic
+                                                        : FontStyle.normal,
+                                              ),
+                                            ),
+                                          ),
+                                          SizedBox(
+                                              height:
+                                                  5.0), // Добавлен отступ между заголовком и подзаголовком
+                                          Text(
+                                            subtitles[itemIndex],
+                                            style: TextStyle(
+                                              color: Colors.grey[400],
+                                              decoration:
+                                                  isCheckedList[itemIndex]
+                                                      ? TextDecoration
+                                                          .lineThrough
+                                                      : null,
+                                              fontStyle:
+                                                  isCheckedList[itemIndex]
+                                                      ? FontStyle.italic
+                                                      : FontStyle.normal,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 10),
+                                          Text(
+                                            'Создано: $formattedDate',
+                                            style: TextStyle(
+                                              color: Colors.grey[400],
+                                              fontSize: 10.0,
+                                              fontStyle: FontStyle.italic,
+                                              decoration:
+                                                  isCheckedList[itemIndex]
+                                                      ? TextDecoration
+                                                          .lineThrough
+                                                      : null,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: Icon(Icons.delete,
+                                          color:
+                                              Color.fromARGB(255, 143, 10, 0)),
+                                      onPressed: () {
+                                        showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return AlertDialog(
+                                              backgroundColor:
+                                                  const Color.fromARGB(
+                                                      255, 22, 22, 22),
+                                              title: Text(
+                                                'Подтвердите удаление',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              content: Text(
+                                                'Вы действительно хотите удалить эту запись?',
+                                                style: TextStyle(
+                                                    color: Colors.white),
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                  child: Text('Отмена'),
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                ),
+                                                TextButton(
+                                                  child: Text(
+                                                    'Удалить',
+                                                    style: TextStyle(
+                                                        color: Colors.red),
+                                                  ),
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                    deleteRecord(index);
+                                                  },
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                      );
+                          ));
                     },
                   ),
             StatisticPage()
@@ -298,13 +349,18 @@ class HomePageState extends State<HomePage>
       appBar: AppBar(
         automaticallyImplyLeading: false, // Убираем кнопку назад
         backgroundColor: Colors.grey[900],
+        shadowColor: Color.fromARGB(115, 0, 0, 0),
+        elevation: 4.0,
         actions: [
           Center(
             child: Container(
               margin: EdgeInsets.only(left: 20, right: 10),
               child: Text(
                 _currentTabIndex == 0 ? 'Home' : 'Stats ',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white),
               ),
             ),
           ),
@@ -414,7 +470,8 @@ class HomePageState extends State<HomePage>
     // Нижняя панель-меню
     const BottomNavigationBarItem(
         icon: Icon(Icons.notes_outlined), label: 'Записи'),
-    const BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'Статистика'),
+    const BottomNavigationBarItem(
+        icon: Icon(Icons.bar_chart), label: 'Статистика'),
   ];
 
   Future<void> loadTitlesAndSubtitles() async {
@@ -426,6 +483,8 @@ class HomePageState extends State<HomePage>
           records.map((record) => record['Subtitle'] as String).toList();
       dates = records.map((record) => record['Timestamp'] as int).toList();
       recordIds = records.map((record) => record.id).toList();
+      isCheckedList =
+          records.map((record) => record['isChecked'] as bool).toList();
     });
   }
 
@@ -524,22 +583,24 @@ class HomePageState extends State<HomePage>
               ],
             ),
             actions: [
-              ElevatedButton(
-                onPressed: () {
-                  saveChanges(index);
-                  _titleController.clear();
-                  _subtitleController.clear();
-                  Navigator.of(context).pop();
-                },
-                style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.all(
-                      Color.fromARGB(255, 99, 0, 156)),
+              Center(
+                child: ElevatedButton(
+                  onPressed: () {
+                    saveChanges(index);
+                    _titleController.clear();
+                    _subtitleController.clear();
+                    Navigator.of(context).pop();
+                  },
+                  style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.all(
+                        Color.fromARGB(255, 99, 0, 156)),
+                  ),
+                  child: Text(
+                    'Сохранить',
+                    style: TextStyle(color: Colors.white),
+                  ),
                 ),
-                child: Text(
-                  'Сохранить',
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
+              )
             ],
             backgroundColor: Colors.grey[900],
             shape: RoundedRectangleBorder(
@@ -670,6 +731,3 @@ class PhoneApp {
   final IconData icon;
   PhoneApp(this.name, this.icon);
 }
-
-// Фон -----------------------------------------------------------------------
-

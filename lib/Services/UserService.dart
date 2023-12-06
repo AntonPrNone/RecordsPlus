@@ -20,15 +20,29 @@ class UserService {
     }
 
     QuerySnapshot querySnapshot = await query.get();
-    return querySnapshot.docs;
+    List<DocumentSnapshot> records = querySnapshot.docs;
+
+    // Добавим поле isChecked со значением false в каждую запись, если его нет
+    records.forEach((record) {
+      Map<String, dynamic> data = record.data() as Map<String, dynamic>;
+
+      if (!data.containsKey('isChecked')) {
+        record.reference.update({'isChecked': false});
+      }
+    });
+
+    return records;
   }
 
-  Future<void> addRecord(String title, String subtitle) async {
+  Future<void> addRecord(String title, String subtitle,
+      {bool newActive = false}) async {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     await usersCollection.doc(user?.uid).collection('Records').add({
       'Title': title,
       'Subtitle': subtitle,
       'Timestamp': timestamp,
+      'isChecked':
+          newActive, // Установка значения isChecked из параметра newActive
     });
   }
 
@@ -41,6 +55,8 @@ class UserService {
         .update({
       'Title': newTitle,
       'Subtitle': newSubtitle,
+      'isChecked':
+          newActive ?? false, // Обновление или установка значения isChecked
     });
   }
 
@@ -50,6 +66,15 @@ class UserService {
         .collection('Records')
         .doc(recordId)
         .delete();
+  }
+
+  Future<void> updateCheckboxState(String recordId, bool newState) async {
+    // Обновление состояния чекбокса в базе данных
+    await usersCollection
+        .doc(user?.uid)
+        .collection('Records')
+        .doc(recordId)
+        .update({'isChecked': newState});
   }
 
   Future<int> getRecordCount() async {
