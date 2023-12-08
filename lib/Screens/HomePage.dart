@@ -1,13 +1,15 @@
 // ignore_for_file: prefer_const_constructors, use_key_in_widget_constructors, file_names, library_private_types_in_public_api
-import 'dart:math';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:intl/intl.dart';
-import 'package:records_plus/Screens/StatisticPage.dart';
+import 'package:records_plus/Screens/HomePageSostav/EmptyPage.dart';
+import 'package:records_plus/Screens/HomePageSostav/NotesPage.dart';
+import 'package:records_plus/Screens/HomePageSostav/StatisticPage.dart';
 import '../RandomPointsPainter.dart';
 import 'AuthPage.dart';
 import '/Services/AuthService.dart';
 import '/Services/UserService.dart';
+import 'HomePageSostav/NoteDetailPage.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -35,25 +37,6 @@ class HomePageState extends State<HomePage>
   List<int> dates = [];
   List<String> recordIds = [];
 
-  final List<PhoneApp> _apps = [
-    PhoneApp('Messages', Icons.message),
-    PhoneApp('Phone', Icons.phone),
-    PhoneApp('Camera', Icons.camera_alt),
-    PhoneApp('Photos', Icons.photo_library),
-    PhoneApp('Maps', Icons.map),
-    PhoneApp('Music', Icons.music_note),
-    PhoneApp('Settings', Icons.settings),
-    PhoneApp('Calendar', Icons.calendar_today),
-    PhoneApp('Clock', Icons.access_time),
-    PhoneApp('Contacts', Icons.contacts),
-    PhoneApp('Calculator', Icons.calculate),
-    PhoneApp('Weather', Icons.wb_sunny),
-    PhoneApp('Notes', Icons.note),
-    PhoneApp('Reminders', Icons.notifications_none),
-    PhoneApp('Safari', Icons.web),
-    PhoneApp('Mail', Icons.mail),
-  ];
-
   @override
   Widget build(BuildContext context) {
     final bottomNavBar = BottomNavigationBar(
@@ -78,6 +61,7 @@ class HomePageState extends State<HomePage>
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Colors.grey[900],
+      drawer: SideDrawer(),
       body: Stack(children: [
         RandomPointsPainter(
           color: Colors.blue,
@@ -86,44 +70,7 @@ class HomePageState extends State<HomePage>
           controller: _pageController,
           children: [
             titles.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        AnimatedTextKit(
-                          animatedTexts: [
-                            TypewriterAnimatedText(
-                              'Добавьте записи с помощью кнопки:',
-                              textStyle: TextStyle(color: Colors.white),
-                              speed: Duration(milliseconds: 50),
-                            ),
-                          ],
-                          isRepeatingAnimation: false,
-                        ),
-                        SizedBox(height: 20),
-                        Icon(
-                          Icons.add,
-                          size: 50.0,
-                          color: Color.fromARGB(255, 111, 0, 255),
-                        ),
-                        SizedBox(height: 20),
-                        SizedBox(
-                          height: 100,
-                          child: AnimatedTextKit(
-                            animatedTexts: [
-                              FadeAnimatedText(
-                                '↓',
-                                textStyle: TextStyle(
-                                    fontSize: 92, color: Colors.white),
-                              ),
-                            ],
-                            repeatForever: true,
-                            pause: Duration(milliseconds: 200),
-                          ),
-                        )
-                      ],
-                    ),
-                  )
+                ? EmptyPage()
                 : ListView.builder(
                     itemCount: filterList().length,
                     itemBuilder: (BuildContext context, int index) {
@@ -296,7 +243,7 @@ class HomePageState extends State<HomePage>
                           ));
                     },
                   ),
-            StatisticPage()
+            NotesPage()
           ],
           onPageChanged: (int index) {
             setState(() {
@@ -311,28 +258,39 @@ class HomePageState extends State<HomePage>
             ? const Color.fromARGB(255, 255, 17, 0)
             : Color.fromARGB(255, 111, 0, 255),
         onPressed: () {
-          if (isBottomSheetOpen) {
-            Navigator.pop(context);
-          } else {
-            _titleController.clear();
-            _subtitleController.clear();
-          }
-          setState(() {
-            isBottomSheetOpen = !isBottomSheetOpen;
-          });
-
-          if (isBottomSheetOpen) {
-            _scaffoldKey.currentState
-                ?.showBottomSheet(
-                  backgroundColor: Colors.grey[900],
-                  (ctx) => _buildBottomSheet(ctx),
-                )
-                .closed
-                .whenComplete(() {
-              setState(() {
-                isBottomSheetOpen = false;
-              });
+          if (_currentTabIndex == 0) {
+            if (isBottomSheetOpen) {
+              Navigator.pop(context);
+            } else {
+              _titleController.clear();
+              _subtitleController.clear();
+            }
+            setState(() {
+              isBottomSheetOpen = !isBottomSheetOpen;
             });
+
+            if (isBottomSheetOpen) {
+              _scaffoldKey.currentState
+                  ?.showBottomSheet(
+                    backgroundColor: Colors.grey[900],
+                    (ctx) => _buildBottomSheet(ctx),
+                  )
+                  .closed
+                  .whenComplete(() {
+                setState(() {
+                  isBottomSheetOpen = false;
+                });
+              });
+            }
+          } else {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => NoteDetailPage(
+                        noteId: ' ',
+                        jsonContent: ' ',
+                      )),
+            );
           }
         },
         child: isBottomSheetOpen
@@ -347,7 +305,7 @@ class HomePageState extends State<HomePage>
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       appBar: AppBar(
-        automaticallyImplyLeading: false, // Убираем кнопку назад
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.grey[900],
         shadowColor: Color.fromARGB(115, 0, 0, 0),
         elevation: 4.0,
@@ -356,33 +314,38 @@ class HomePageState extends State<HomePage>
             child: Container(
               margin: EdgeInsets.only(left: 20, right: 10),
               child: Text(
-                _currentTabIndex == 0 ? 'Home' : 'Stats ',
+                _currentTabIndex == 0 ? 'Home' : 'Notes',
                 style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Theme(
-              data: ThemeData.dark(), // Используем тему тёмной темы
-              child: SizedBox(
-                child: TextField(
-                  focusNode: myFocusNode,
-                  onChanged: (value) {
-                    setState(() {
-                      searchKeyword = value;
-                    });
-                  },
-                  decoration: InputDecoration(
-                    hintText: 'Поиск',
-                    prefixIcon: Icon(Icons.search),
-                  ),
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
               ),
             ),
           ),
+          _currentTabIndex == 0
+              ? Expanded(
+                  child: Theme(
+                    data: ThemeData.dark(),
+                    child: SizedBox(
+                      child: TextField(
+                        focusNode: myFocusNode,
+                        onChanged: (value) {
+                          setState(() {
+                            searchKeyword = value;
+                          });
+                        },
+                        decoration: InputDecoration(
+                          hintText: 'Поиск',
+                          prefixIcon: Icon(Icons.search),
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              : Expanded(
+                  child: Container(),
+                ), // Добавил условие, чтобы избежать ошибки
           AnimatedBuilder(
             animation: _animationController,
             builder: (BuildContext context, Widget? child) {
@@ -408,7 +371,9 @@ class HomePageState extends State<HomePage>
                     title: Text(
                       'Подтвердите выход',
                       style: TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.bold),
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     content: Text(
                       'Вы действительно хотите выйти из своей учётной записи?',
@@ -470,8 +435,7 @@ class HomePageState extends State<HomePage>
     // Нижняя панель-меню
     const BottomNavigationBarItem(
         icon: Icon(Icons.notes_outlined), label: 'Записи'),
-    const BottomNavigationBarItem(
-        icon: Icon(Icons.bar_chart), label: 'Статистика'),
+    const BottomNavigationBarItem(icon: Icon(Icons.notes), label: 'Заметки'),
   ];
 
   Future<void> loadTitlesAndSubtitles() async {
@@ -726,8 +690,36 @@ class HomePageState extends State<HomePage>
   }
 }
 
-class PhoneApp {
-  final String name;
-  final IconData icon;
-  PhoneApp(this.name, this.icon);
+class SideDrawer extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      surfaceTintColor: Color.fromARGB(0, 0, 0, 0),
+      backgroundColor: Color.fromARGB(255, 29, 29, 29),
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: <Widget>[
+          UserAccountsDrawerHeader(
+            decoration: BoxDecoration(
+              color: Color.fromARGB(255, 24, 24, 24),
+            ),
+            accountName: Text(
+              'Дата регистрации: ${FirebaseAuth.instance.currentUser?.metadata.creationTime != null ? DateFormat('yyyy-MM-dd HH:mm:ss').format(FirebaseAuth.instance.currentUser!.metadata.creationTime!.toLocal()) : "Неизвестно"}', // Отображение даты регистрации
+              style: TextStyle(fontSize: 14),
+            ),
+            accountEmail: Text(FirebaseAuth.instance.currentUser?.email ?? ''),
+            currentAccountPicture: CircleAvatar(
+              backgroundColor: Color.fromARGB(255, 111, 0, 255),
+              child: Icon(
+                Icons.person,
+                size: 35,
+              ),
+            ),
+          ),
+          StatisticPage(),
+          // Добавьте другие пункты меню по необходимости
+        ],
+      ),
+    );
+  }
 }

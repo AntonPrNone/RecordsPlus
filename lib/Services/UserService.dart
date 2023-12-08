@@ -23,20 +23,21 @@ class UserService {
     List<DocumentSnapshot> records = querySnapshot.docs;
 
     // Добавим поле isChecked со значением false в каждую запись, если его нет
-    records.forEach((record) {
+    for (var record in records) {
       Map<String, dynamic> data = record.data() as Map<String, dynamic>;
 
       if (!data.containsKey('isChecked')) {
         record.reference.update({'isChecked': false});
       }
-    });
+    }
 
     return records;
   }
 
   Future<void> addRecord(String title, String subtitle,
       {bool newActive = false}) async {
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final timestamp =
+        DateTime.now().toUtc().add(Duration(hours: 3)).millisecondsSinceEpoch;
     await usersCollection.doc(user?.uid).collection('Records').add({
       'Title': title,
       'Subtitle': subtitle,
@@ -165,5 +166,62 @@ class UserService {
     }
 
     return keywordCountMap;
+  }
+
+  Future<String?> saveQuillContentToFirestore(
+      String noteId, String quillContent) async {
+    try {
+      final userDocRef = usersCollection.doc(user?.uid);
+      final noteDocRef = userDocRef.collection('Notes').doc(noteId);
+
+      // Проверяем, существует ли документ с заданным идентификатором
+      final noteSnapshot = await noteDocRef.get();
+
+      if (noteSnapshot.exists) {
+        // Если документ существует, обновляем его содержимое
+        await noteDocRef.update({'content': quillContent});
+      } else {
+        // Если документ не существует, создаем новый документ с уникальным идентификатором
+        final newNoteDocRef = userDocRef.collection('Notes').doc();
+        await newNoteDocRef.set({'content': quillContent});
+
+        // Возвращаем идентификатор нового документа
+        return newNoteDocRef.id;
+      }
+      // Возвращаем идентификатор существующего документа
+      return noteDocRef.id;
+    } catch (error) {
+      print('Error saving/updating Quill content to Firestore: $error');
+      // В случае ошибки возвращаем null или другое значение, чтобы указать на неудачу
+      return null;
+    }
+  }
+
+  Stream<List<Map<String, dynamic>>> get quillContentStream {
+    return usersCollection
+        .doc(user?.uid)
+        .collection('Notes')
+        .snapshots()
+        .map((querySnapshot) {
+      // Преобразование списка документов в список содержимого и их идентификаторов
+      return querySnapshot.docs.map((doc) {
+        return {
+          'id': doc.id,
+          'content': doc['content'] as String,
+        };
+      }).toList();
+    });
+  }
+
+  Future<void> deleteNoteFromFirestore(String noteId) async {
+    try {
+      await usersCollection
+          .doc(user?.uid)
+          .collection('Notes')
+          .doc(noteId)
+          .delete();
+    } catch (error) {
+      print('Error deleting note from Firestore: $error');
+    }
   }
 }
