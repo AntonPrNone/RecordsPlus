@@ -1,9 +1,14 @@
-// ignore_for_file: prefer_const_constructors, use_key_in_widget_constructors, file_names, library_private_types_in_public_api
+// ignore_for_file: prefer_const_constructors, use_key_in_widget_constructors, file_names, library_private_types_in_public_api, non_constant_identifier_names
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:records_plus/AppState.dart';
 import 'package:records_plus/Screens/HomePageSostav/EmptyPage.dart';
 import 'package:records_plus/Screens/HomePageSostav/NotesPage.dart';
+import 'package:records_plus/Screens/HomePageSostav/SettingsPage.dart';
 import 'package:records_plus/Screens/HomePageSostav/StatisticPage.dart';
 import '../RandomPointsPainter.dart';
 import 'AuthPage.dart';
@@ -57,20 +62,38 @@ class HomePageState extends State<HomePage>
         });
       },
     );
+    final appState = Provider.of<AppState>(context);
 
     return Scaffold(
       key: _scaffoldKey,
       backgroundColor: Colors.grey[900],
       drawer: SideDrawer(),
       body: Stack(children: [
-        RandomPointsPainter(
-          color: Colors.blue,
+        // RandomPointsPainter(
+        //   color: Colors.blue,
+        // ),
+        // Фоновое изображение
+
+        Positioned.fill(
+          child: appState.backgroundImage != null &&
+                  File(appState.backgroundImage!.path).existsSync()
+              ? Image.file(
+                  appState.backgroundImage!,
+                  fit: BoxFit.cover,
+                )
+              : Image.asset(
+                  'assets/imgs/bg2.jpg',
+                  fit: BoxFit.cover,
+                ),
         ),
+
         PageView(
           controller: _pageController,
           children: [
             titles.isEmpty
-                ? EmptyPage()
+                ? EmptyPage(
+                    firstText: 'записи',
+                  )
                 : ListView.builder(
                     itemCount: filterList().length,
                     itemBuilder: (BuildContext context, int index) {
@@ -108,136 +131,159 @@ class HomePageState extends State<HomePage>
                               onTap: () {
                                 editRecord(index);
                               },
-                              child: Padding(
-                                padding: const EdgeInsets.all(10.0),
-                                child: Row(
-                                  children: [
-                                    Checkbox(
-                                      value: isCheckedList[itemIndex],
-                                      onChanged: (bool? value) {
-                                        setState(() {
-                                          isCheckedList[itemIndex] =
-                                              value ?? false;
-                                          firestoreService.updateCheckboxState(
-                                              recordIds[itemIndex],
-                                              isCheckedList[itemIndex]);
-                                        });
-                                      },
-                                    ),
-                                    SizedBox(
-                                        width:
-                                            10.0), // Добавлен отступ между чекбоксом и текстом
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          RichText(
-                                            text: TextSpan(
-                                              text: titles[itemIndex],
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 16.0,
-                                                color: isCheckedList[itemIndex]
-                                                    ? Colors.grey[400]
-                                                    : null,
-                                                decoration:
-                                                    isCheckedList[itemIndex]
-                                                        ? TextDecoration
-                                                            .lineThrough
-                                                        : TextDecoration.none,
-                                                fontStyle:
-                                                    isCheckedList[itemIndex]
-                                                        ? FontStyle.italic
-                                                        : FontStyle.normal,
-                                              ),
-                                            ),
-                                          ),
-                                          SizedBox(
-                                              height:
-                                                  5.0), // Добавлен отступ между заголовком и подзаголовком
-                                          Text(
-                                            subtitles[itemIndex],
-                                            style: TextStyle(
-                                              color: Colors.grey[400],
-                                              decoration:
-                                                  isCheckedList[itemIndex]
-                                                      ? TextDecoration
-                                                          .lineThrough
-                                                      : null,
-                                              fontStyle:
-                                                  isCheckedList[itemIndex]
-                                                      ? FontStyle.italic
-                                                      : FontStyle.normal,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 10),
-                                          Text(
-                                            'Создано: $formattedDate',
-                                            style: TextStyle(
-                                              color: Colors.grey[400],
-                                              fontSize: 10.0,
-                                              fontStyle: FontStyle.italic,
-                                              decoration:
-                                                  isCheckedList[itemIndex]
-                                                      ? TextDecoration
-                                                          .lineThrough
-                                                      : null,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    IconButton(
-                                      icon: Icon(Icons.delete,
-                                          color:
-                                              Color.fromARGB(255, 143, 10, 0)),
-                                      onPressed: () {
-                                        showDialog(
-                                          context: context,
-                                          builder: (BuildContext context) {
-                                            return AlertDialog(
-                                              backgroundColor:
-                                                  const Color.fromARGB(
-                                                      255, 22, 22, 22),
-                                              title: Text(
-                                                'Подтвердите удаление',
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                              content: Text(
-                                                'Вы действительно хотите удалить эту запись?',
-                                                style: TextStyle(
-                                                    color: Colors.white),
-                                              ),
-                                              actions: [
-                                                TextButton(
-                                                  child: Text('Отмена'),
-                                                  onPressed: () {
-                                                    Navigator.of(context).pop();
-                                                  },
-                                                ),
-                                                TextButton(
-                                                  child: Text(
-                                                    'Удалить',
-                                                    style: TextStyle(
-                                                        color: Colors.red),
+                              child: Stack(
+                                children: [
+                                  Padding(
+                                    padding: EdgeInsets.only(
+                                        top: 10, bottom: 10, right: 10),
+                                    child: Row(
+                                      children: [
+                                        Checkbox(
+                                          value: isCheckedList[itemIndex],
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              isCheckedList[itemIndex] =
+                                                  value ?? false;
+                                              firestoreService
+                                                  .updateCheckboxState(
+                                                recordIds[itemIndex],
+                                                isCheckedList[itemIndex],
+                                              );
+                                            });
+                                          },
+                                        ),
+                                        SizedBox(width: 10.0),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              RichText(
+                                                text: TextSpan(
+                                                  text: titles[itemIndex],
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 16.0,
+                                                    color:
+                                                        isCheckedList[itemIndex]
+                                                            ? Colors.grey[400]
+                                                            : null,
+                                                    decoration:
+                                                        isCheckedList[itemIndex]
+                                                            ? TextDecoration
+                                                                .lineThrough
+                                                            : TextDecoration
+                                                                .none,
+                                                    fontStyle:
+                                                        isCheckedList[itemIndex]
+                                                            ? FontStyle.italic
+                                                            : FontStyle.normal,
                                                   ),
-                                                  onPressed: () {
-                                                    Navigator.of(context).pop();
-                                                    deleteRecord(index);
-                                                  },
                                                 ),
-                                              ],
+                                              ),
+                                              SizedBox(height: 5.0),
+                                              Text(
+                                                subtitles[itemIndex],
+                                                style: TextStyle(
+                                                  color: Colors.grey[400],
+                                                  decoration:
+                                                      isCheckedList[itemIndex]
+                                                          ? TextDecoration
+                                                              .lineThrough
+                                                          : null,
+                                                  fontStyle:
+                                                      isCheckedList[itemIndex]
+                                                          ? FontStyle.italic
+                                                          : FontStyle.normal,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 10),
+                                              Text(
+                                                'Создано: $formattedDate',
+                                                style: TextStyle(
+                                                  color: Colors.grey[400],
+                                                  fontSize: 10.0,
+                                                  fontStyle: FontStyle.italic,
+                                                  decoration:
+                                                      isCheckedList[itemIndex]
+                                                          ? TextDecoration
+                                                              .lineThrough
+                                                          : null,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        IconButton(
+                                          icon: Icon(Icons.delete,
+                                              color: Color.fromARGB(
+                                                  255, 143, 10, 0)),
+                                          onPressed: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (BuildContext context) {
+                                                return AlertDialog(
+                                                  backgroundColor:
+                                                      const Color.fromARGB(
+                                                          255, 22, 22, 22),
+                                                  title: Text(
+                                                    'Подтвердите удаление',
+                                                    style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                  content: Text(
+                                                    'Вы действительно хотите удалить эту запись?',
+                                                    style: TextStyle(
+                                                        color: Colors.white),
+                                                  ),
+                                                  actions: [
+                                                    TextButton(
+                                                      child: Text('Отмена'),
+                                                      onPressed: () {
+                                                        Navigator.of(context)
+                                                            .pop();
+                                                      },
+                                                    ),
+                                                    TextButton(
+                                                      child: Text(
+                                                        'Удалить',
+                                                        style: TextStyle(
+                                                            color: Colors.red),
+                                                      ),
+                                                      onPressed: () {
+                                                        Navigator.of(context)
+                                                            .pop();
+                                                        deleteRecord(index);
+                                                      },
+                                                    ),
+                                                  ],
+                                                );
+                                              },
                                             );
                                           },
-                                        );
-                                      },
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                  Positioned(
+                                    top: 0,
+                                    bottom: 0,
+                                    left: 0,
+                                    child: DecoratedBox(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.only(
+                                          topLeft: Radius.circular(10.0),
+                                          bottomLeft: Radius.circular(10.0),
+                                        ),
+                                        color: Color.fromARGB(255, 111, 0, 255),
+                                      ),
+                                      child: SizedBox(width: 8.0),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ));
@@ -299,8 +345,8 @@ class HomePageState extends State<HomePage>
                 color: Colors.black,
               )
             : Icon(
-                Icons.add,
-                color: Colors.black,
+                Icons.favorite,
+                color: Colors.red,
               ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
@@ -425,7 +471,7 @@ class HomePageState extends State<HomePage>
             },
             icon: Icon(Icons.exit_to_app_rounded),
             color: Colors.red,
-          )
+          ),
         ],
       ),
     );
@@ -435,7 +481,8 @@ class HomePageState extends State<HomePage>
     // Нижняя панель-меню
     const BottomNavigationBarItem(
         icon: Icon(Icons.notes_outlined), label: 'Записи'),
-    const BottomNavigationBarItem(icon: Icon(Icons.notes), label: 'Заметки'),
+    const BottomNavigationBarItem(
+        icon: Icon(Icons.pending_actions), label: 'Заметки'),
   ];
 
   Future<void> loadTitlesAndSubtitles() async {
@@ -716,10 +763,85 @@ class SideDrawer extends StatelessWidget {
               ),
             ),
           ),
-          StatisticPage(),
+          ListTile(
+            leading: Icon(
+              Icons.settings,
+              color: Color.fromARGB(255, 95, 95, 95),
+            ), // Значок настроек
+            title: Text(
+              'Настройки',
+              style: TextStyle(color: Colors.white),
+            ),
+            onTap: () {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => SettingsPage()));
+            },
+          ),
+          ListTile(
+            leading: Icon(
+              Icons.analytics_outlined,
+              color: Color.fromARGB(255, 95, 95, 95),
+            ), // Значок настроек
+            title: Text(
+              'Статистика',
+              style: TextStyle(color: Colors.white),
+            ),
+            onTap: () {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => StatisticPage()));
+            },
+          ),
+
           // Добавьте другие пункты меню по необходимости
         ],
       ),
     );
+  }
+}
+
+class SnowfallAnimation extends StatefulWidget {
+  @override
+  _SnowfallAnimationState createState() => _SnowfallAnimationState();
+}
+
+class _SnowfallAnimationState extends State<SnowfallAnimation>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      duration: const Duration(seconds: 10),
+      vsync: this,
+    );
+
+    _animation = Tween<double>(begin: 0, end: 1).animate(_controller);
+
+    _controller.repeat();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, 100 * _animation.value),
+          child: Icon(
+            Icons.ac_unit,
+            color: Colors.white,
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 }

@@ -6,83 +6,55 @@ import 'package:records_plus/Services/UserService.dart';
 class StatisticPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            FutureBuilder<int>(
-              future: UserService().getRecordCount(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const CircularProgressIndicator();
-                } else if (snapshot.hasError) {
-                  return Text(
-                    'Ошибка: ${snapshot.error}',
-                    style: TextStyle(fontSize: 18, color: Colors.white),
-                  );
-                } else {
+    return Scaffold(
+      backgroundColor: Colors.grey[900], // Фоновый цвет страницы,
+      appBar: AppBar(
+        title: Text('Статистика'),
+        backgroundColor: Color.fromARGB(255, 25, 25, 25),
+        foregroundColor: Colors.white,
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              FutureBuilder<int>(
+                future: UserService().getRecordCount(),
+                builder: (context, snapshot) {
                   final recordCount = snapshot.data ?? 0;
                   return StatisticWidget(
                     title: 'Количество записей:',
                     value: recordCount.toString(),
                   );
-                }
-              },
-            ),
-            const SizedBox(height: 20),
-            FutureBuilder<double>(
-              future: UserService().getAverageTitleLength(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const CircularProgressIndicator();
-                } else if (snapshot.hasError) {
-                  return Text(
-                    'Ошибка: ${snapshot.error}',
-                    style: TextStyle(fontSize: 18, color: Colors.white),
-                  );
-                } else {
+                },
+              ),
+              const SizedBox(height: 20),
+              FutureBuilder<double>(
+                future: UserService().getAverageTitleLength(),
+                builder: (context, snapshot) {
                   final averageTitleLength = snapshot.data ?? 0.0;
                   return StatisticWidget(
                     title: 'Средняя длина заголовка:',
                     value: averageTitleLength.toStringAsFixed(2),
                   );
-                }
-              },
-            ),
-            const SizedBox(height: 20),
-            FutureBuilder<double>(
-              future: UserService().getAverageSubtitleLength(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const CircularProgressIndicator();
-                } else if (snapshot.hasError) {
-                  return Text(
-                    'Ошибка: ${snapshot.error}',
-                    style: TextStyle(fontSize: 18, color: Colors.white),
-                  );
-                } else {
+                },
+              ),
+              const SizedBox(height: 20),
+              FutureBuilder<double>(
+                future: UserService().getAverageSubtitleLength(),
+                builder: (context, snapshot) {
                   final averageSubtitleLength = snapshot.data ?? 0.0;
                   return StatisticWidget(
                     title: 'Средняя длина подзаголовка:',
                     value: averageSubtitleLength.toStringAsFixed(2),
                   );
-                }
-              },
-            ),
-            const SizedBox(height: 20),
-            FutureBuilder<Map<String, int>>(
-              future: UserService().getKeywordCounts(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return CircularProgressIndicator();
-                } else if (snapshot.hasError) {
-                  return Text(
-                    'Ошибка: ${snapshot.error}',
-                    style: TextStyle(fontSize: 18, color: Colors.white),
-                  );
-                } else {
+                },
+              ),
+              const SizedBox(height: 20),
+              FutureBuilder<Map<String, int>>(
+                future: UserService().getKeywordCounts(),
+                builder: (context, snapshot) {
                   final keywordCountMap = snapshot.data ?? {};
                   final frequentKeywords = keywordCountMap.keys.toList();
                   frequentKeywords.sort((a, b) =>
@@ -97,15 +69,24 @@ class StatisticPage extends StatelessWidget {
                     return const Text('Нет данных',
                         style: TextStyle(fontSize: 18, color: Colors.white));
                   }
-                }
-              },
-            ),
-          ],
+                },
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
+
+  Widget buildErrorWidget(dynamic error) {
+    return Text(
+      'Ошибка: $error',
+      style: TextStyle(fontSize: 18, color: Colors.white),
+    );
+  }
 }
+
+// Остальной код остается без изменений
 
 class StatisticWidget extends StatelessWidget {
   final String title;

@@ -37,7 +37,7 @@ class UserService {
   Future<void> addRecord(String title, String subtitle,
       {bool newActive = false}) async {
     final timestamp =
-        DateTime.now().toUtc().add(Duration(hours: 3)).millisecondsSinceEpoch;
+        DateTime.now().toUtc().add(const Duration(hours: 3)).millisecondsSinceEpoch;
     await usersCollection.doc(user?.uid).collection('Records').add({
       'Title': title,
       'Subtitle': subtitle,

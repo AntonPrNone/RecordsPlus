@@ -4,6 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:animated_text_kit/animated_text_kit.dart';
 
 class EmptyPage extends StatelessWidget {
+  final String firstText;
+
+  EmptyPage({required this.firstText});
+
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -13,7 +17,7 @@ class EmptyPage extends StatelessWidget {
           AnimatedTextKit(
             animatedTexts: [
               TypewriterAnimatedText(
-                'Добавьте записи с помощью кнопки:',
+                'Добавьте $firstText с помощью кнопки:',
                 textStyle: const TextStyle(color: Colors.white),
                 speed: const Duration(milliseconds: 50),
               ),
@@ -26,9 +30,8 @@ class EmptyPage extends StatelessWidget {
             size: 50.0,
             color: Color.fromARGB(255, 111, 0, 255),
           ),
-          const SizedBox(height: 20),
           SizedBox(
-            height: 100,
+            height: 120,
             child: AnimatedTextKit(
               animatedTexts: [
                 FadeAnimatedText(
@@ -45,3 +48,4 @@ class EmptyPage extends StatelessWidget {
     );
   }
 }
+
