@@ -34,10 +34,38 @@ class UserService {
     return records;
   }
 
+  Stream<List<DocumentSnapshot>> getAllRecordsStream({
+    String? orderBy = 'Timestamp',
+    bool reverseOrder = false,
+  }) {
+    Query query = usersCollection.doc(user?.uid).collection('Records');
+
+    if (orderBy != null) {
+      query = query.orderBy(orderBy, descending: reverseOrder);
+    }
+
+    return query.snapshots().map((querySnapshot) {
+      List<DocumentSnapshot> records = querySnapshot.docs;
+
+      // Добавим поле isChecked со значением false в каждую запись, если его нет
+      for (var record in records) {
+        Map<String, dynamic> data = record.data() as Map<String, dynamic>;
+
+        if (!data.containsKey('isChecked')) {
+          record.reference.update({'isChecked': false});
+        }
+      }
+
+      return records;
+    });
+  }
+
   Future<void> addRecord(String title, String subtitle,
       {bool newActive = false}) async {
-    final timestamp =
-        DateTime.now().toUtc().add(const Duration(hours: 3)).millisecondsSinceEpoch;
+    final timestamp = DateTime.now()
+        .toUtc()
+        .add(const Duration(hours: 3))
+        .millisecondsSinceEpoch;
     await usersCollection.doc(user?.uid).collection('Records').add({
       'Title': title,
       'Subtitle': subtitle,
@@ -78,15 +106,15 @@ class UserService {
         .update({'isChecked': newState});
   }
 
-  Future<int> getRecordCount() async {
+  // --------------------------- Статистика ----------------------------------
+
+  int getRecordCount(List<DocumentSnapshot> records) {
     // Возвращает количество записей пользователя
-    List<DocumentSnapshot> records = await getAllRecords();
     return records.length;
   }
 
-  Future<double> getAverageTitleLength() async {
+  double getAverageTitleLength(List<DocumentSnapshot> records) {
     // Возвращает среднюю длину заголовков записей пользователя
-    List<DocumentSnapshot> records = await getAllRecords();
     if (records.isEmpty) {
       return 0.0;
     }
@@ -100,9 +128,8 @@ class UserService {
     return totalTitleLength / records.length;
   }
 
-  Future<double> getAverageSubtitleLength() async {
+  double getAverageSubtitleLength(List<DocumentSnapshot> records) {
     // Возвращает среднюю длину подзаголовков записей пользователя
-    List<DocumentSnapshot> records = await getAllRecords();
     if (records.isEmpty) {
       return 0.0;
     }
@@ -116,9 +143,8 @@ class UserService {
     return totalSubtitleLength / records.length;
   }
 
-  Future<List<String>> getFrequentKeywords() async {
+  List<String> getFrequentKeywords(List<DocumentSnapshot> records) {
     // Возвращает наиболее часто используемые ключевые слова из заголовков и подзаголовков
-    List<DocumentSnapshot> records = await getAllRecords();
     Map<String, int> keywordCountMap = {};
 
     for (DocumentSnapshot record in records) {
@@ -150,8 +176,8 @@ class UserService {
     return frequentKeywords;
   }
 
-  Future<Map<String, int>> getKeywordCounts() async {
-    List<DocumentSnapshot> records = await getAllRecords();
+  Future<Map<String, int>> getKeywordCounts(
+      List<DocumentSnapshot> records) async {
     Map<String, int> keywordCountMap = {};
 
     for (DocumentSnapshot record in records) {
@@ -167,6 +193,8 @@ class UserService {
 
     return keywordCountMap;
   }
+
+  // ----------------------------- Заметки ------------------------------------
 
   Future<String?> saveQuillContentToFirestore(
       String noteId, String quillContent) async {

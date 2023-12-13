@@ -1,16 +1,13 @@
-// ignore_for_file: prefer_const_constructors, use_key_in_widget_constructors, file_names, library_private_types_in_public_api, non_constant_identifier_names
+// ignore_for_file: prefer_const_constructors, use_key_in_widget_constructors, file_names, library_private_types_in_public_api, non_constant_identifier_names, use_build_context_synchronously
 import 'dart:io';
-
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:records_plus/AppState.dart';
 import 'package:records_plus/Screens/HomePageSostav/EmptyPage.dart';
+import 'package:records_plus/Screens/HomePageSostav/HomePageRecords/SideDrawer_HomePage.dart';
 import 'package:records_plus/Screens/HomePageSostav/NotesPage.dart';
-import 'package:records_plus/Screens/HomePageSostav/SettingsPage.dart';
-import 'package:records_plus/Screens/HomePageSostav/StatisticPage.dart';
-import '../RandomPointsPainter.dart';
 import 'AuthPage.dart';
 import '/Services/AuthService.dart';
 import '/Services/UserService.dart';
@@ -65,416 +62,278 @@ class HomePageState extends State<HomePage>
     final appState = Provider.of<AppState>(context);
 
     return Scaffold(
-      key: _scaffoldKey,
-      backgroundColor: Colors.grey[900],
-      drawer: SideDrawer(),
-      body: Stack(children: [
-        // RandomPointsPainter(
-        //   color: Colors.blue,
-        // ),
-        // Фоновое изображение
-
-        Positioned.fill(
-          child: appState.backgroundImage != null &&
-                  File(appState.backgroundImage!.path).existsSync()
-              ? Image.file(
-                  appState.backgroundImage!,
-                  fit: BoxFit.cover,
-                )
-              : Image.asset(
-                  'assets/imgs/bg2.jpg',
-                  fit: BoxFit.cover,
-                ),
-        ),
-
-        PageView(
-          controller: _pageController,
-          children: [
-            titles.isEmpty
-                ? EmptyPage(
-                    firstText: 'записи',
+        key: _scaffoldKey,
+        backgroundColor: Colors.grey[900],
+        drawer: SideDrawer(),
+        body: Stack(children: [
+          // RandomPointsPainter(
+          //   color: Colors.blue,
+          // ),
+          Positioned.fill(
+            child: appState.backgroundImage != null &&
+                    File(appState.backgroundImage!.path).existsSync()
+                ? Image.file(
+                    appState.backgroundImage!,
+                    fit: BoxFit.cover,
                   )
-                : ListView.builder(
-                    itemCount: filterList().length,
-                    itemBuilder: (BuildContext context, int index) {
-                      final int itemIndex = filterList()[index];
-                      final date =
-                          DateTime.fromMillisecondsSinceEpoch(dates[itemIndex]);
-                      final formattedDate =
-                          DateFormat.yMMMMd('ru').add_jms().format(date);
-                      return Dismissible(
-                          key: UniqueKey(),
-                          onDismissed: (direction) {
-                            if (direction == DismissDirection.endToStart) {
-                              deleteRecord(itemIndex);
-                            }
-                          },
-                          direction: DismissDirection.endToStart,
-                          background: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.red,
-                              borderRadius: BorderRadius.circular(16.0),
-                            ),
-                            alignment: Alignment.centerRight,
-                            padding: const EdgeInsets.only(right: 16.0),
-                            child: Icon(Icons.delete, color: Colors.white),
-                          ),
-                          child: Card(
-                            surfaceTintColor: Color.fromARGB(0, 0, 0, 0),
-                            color: Color.fromARGB(150, 20, 20, 20),
-                            margin: const EdgeInsets.all(10.0),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10.0),
-                            ),
-                            elevation: 4.0,
-                            child: InkWell(
-                              onTap: () {
-                                editRecord(index);
-                              },
-                              child: Stack(
-                                children: [
-                                  Padding(
-                                    padding: EdgeInsets.only(
-                                        top: 10, bottom: 10, right: 10),
-                                    child: Row(
-                                      children: [
-                                        Checkbox(
-                                          value: isCheckedList[itemIndex],
-                                          onChanged: (bool? value) {
-                                            setState(() {
-                                              isCheckedList[itemIndex] =
-                                                  value ?? false;
-                                              firestoreService
-                                                  .updateCheckboxState(
-                                                recordIds[itemIndex],
-                                                isCheckedList[itemIndex],
-                                              );
-                                            });
-                                          },
-                                        ),
-                                        SizedBox(width: 10.0),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              RichText(
-                                                text: TextSpan(
-                                                  text: titles[itemIndex],
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 16.0,
-                                                    color:
-                                                        isCheckedList[itemIndex]
-                                                            ? Colors.grey[400]
-                                                            : null,
-                                                    decoration:
-                                                        isCheckedList[itemIndex]
-                                                            ? TextDecoration
-                                                                .lineThrough
-                                                            : TextDecoration
-                                                                .none,
-                                                    fontStyle:
-                                                        isCheckedList[itemIndex]
-                                                            ? FontStyle.italic
-                                                            : FontStyle.normal,
-                                                  ),
-                                                ),
-                                              ),
-                                              SizedBox(height: 5.0),
-                                              Text(
-                                                subtitles[itemIndex],
-                                                style: TextStyle(
-                                                  color: Colors.grey[400],
-                                                  decoration:
-                                                      isCheckedList[itemIndex]
-                                                          ? TextDecoration
-                                                              .lineThrough
-                                                          : null,
-                                                  fontStyle:
-                                                      isCheckedList[itemIndex]
-                                                          ? FontStyle.italic
-                                                          : FontStyle.normal,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 10),
-                                              Text(
-                                                'Создано: $formattedDate',
-                                                style: TextStyle(
-                                                  color: Colors.grey[400],
-                                                  fontSize: 10.0,
-                                                  fontStyle: FontStyle.italic,
-                                                  decoration:
-                                                      isCheckedList[itemIndex]
-                                                          ? TextDecoration
-                                                              .lineThrough
-                                                          : null,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        IconButton(
-                                          icon: Icon(Icons.delete,
-                                              color: Color.fromARGB(
-                                                  255, 143, 10, 0)),
-                                          onPressed: () {
-                                            showDialog(
-                                              context: context,
-                                              builder: (BuildContext context) {
-                                                return AlertDialog(
-                                                  backgroundColor:
-                                                      const Color.fromARGB(
-                                                          255, 22, 22, 22),
-                                                  title: Text(
-                                                    'Подтвердите удаление',
-                                                    style: TextStyle(
-                                                      color: Colors.white,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                    ),
-                                                  ),
-                                                  content: Text(
-                                                    'Вы действительно хотите удалить эту запись?',
-                                                    style: TextStyle(
-                                                        color: Colors.white),
-                                                  ),
-                                                  actions: [
-                                                    TextButton(
-                                                      child: Text('Отмена'),
-                                                      onPressed: () {
-                                                        Navigator.of(context)
-                                                            .pop();
-                                                      },
-                                                    ),
-                                                    TextButton(
-                                                      child: Text(
-                                                        'Удалить',
-                                                        style: TextStyle(
-                                                            color: Colors.red),
+                : Image.asset(
+                    'assets/imgs/bg2.jpg',
+                    fit: BoxFit.cover,
+                  ),
+          ),
+          StreamBuilder<List<DocumentSnapshot>>(
+            stream: UserService().getAllRecordsStream(),
+            builder: (BuildContext context,
+                AsyncSnapshot<List<DocumentSnapshot>> snapshot) {
+              if (snapshot.hasError) {
+                return Text('Произошла ошибка: ${snapshot.error}');
+              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return EmptyPage(firstText: 'записи');
+              } else {
+                // Очищаем коллекции перед обновлением
+                titles.clear();
+                subtitles.clear();
+                isCheckedList.clear();
+                dates.clear();
+                recordIds.clear();
+
+                // Обновляем коллекции на основе новых данных
+                for (var recordSnapshot in snapshot.data!) {
+                  Map<String, dynamic> data =
+                      recordSnapshot.data() as Map<String, dynamic>;
+                  // Проверяем, соответствует ли запись ключевому слову
+                  if (data['Title']
+                          .toLowerCase()
+                          .contains(searchKeyword.toLowerCase()) ||
+                      data['Subtitle']
+                          .toLowerCase()
+                          .contains(searchKeyword.toLowerCase())) {
+                    titles.add(data['Title']);
+                    subtitles.add(data['Subtitle']);
+                    isCheckedList.add(data['isChecked']);
+                    dates.add(data['Timestamp']);
+                    recordIds.add(recordSnapshot.id);
+                  }
+                }
+                return PageView(
+                  controller: _pageController,
+                  children: [
+                    titles.isEmpty
+                        ? EmptyPage(
+                            firstText: 'записи',
+                          )
+                        : ListView.builder(
+                            itemCount: titles.length,
+                            itemBuilder: (BuildContext context, int index) {
+                              final DocumentSnapshot recordSnapshot =
+                                  snapshot.data![index];
+                              final Map<String, dynamic> data =
+                                  recordSnapshot.data() as Map<String, dynamic>;
+                              // final int itemIndex = filterList()[index];
+                              final date = DateTime.fromMillisecondsSinceEpoch(
+                                  data['Timestamp']);
+                              final formattedDate = DateFormat.yMMMMd('ru')
+                                  .add_jms()
+                                  .format(date);
+
+                              return Card(
+                                surfaceTintColor: Color.fromARGB(0, 0, 0, 0),
+                                color: Color.fromARGB(150, 20, 20, 20),
+                                margin: const EdgeInsets.all(10.0),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10.0),
+                                ),
+                                elevation: 4.0,
+                                child: InkWell(
+                                  onTap: () {
+                                    editRecord(index);
+                                  },
+                                  child: Stack(
+                                    children: [
+                                      Padding(
+                                        padding: EdgeInsets.only(
+                                            top: 10, bottom: 10, right: 10),
+                                        child: Row(
+                                          children: [
+                                            Checkbox(
+                                              value: isCheckedList[index],
+                                              onChanged: (bool? value) {
+                                                setState(() {
+                                                  isCheckedList[index] =
+                                                      value ?? false;
+                                                  firestoreService
+                                                      .updateCheckboxState(
+                                                    recordIds[index],
+                                                    isCheckedList[index],
+                                                  );
+                                                });
+                                              },
+                                            ),
+                                            SizedBox(width: 10.0),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  RichText(
+                                                    text: TextSpan(
+                                                      text: titles[index],
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 16.0,
+                                                        color:
+                                                            isCheckedList[index]
+                                                                ? Colors
+                                                                    .grey[400]
+                                                                : null,
+                                                        decoration:
+                                                            isCheckedList[index]
+                                                                ? TextDecoration
+                                                                    .lineThrough
+                                                                : TextDecoration
+                                                                    .none,
+                                                        fontStyle:
+                                                            isCheckedList[index]
+                                                                ? FontStyle
+                                                                    .italic
+                                                                : FontStyle
+                                                                    .normal,
                                                       ),
-                                                      onPressed: () {
-                                                        Navigator.of(context)
-                                                            .pop();
-                                                        deleteRecord(index);
-                                                      },
                                                     ),
-                                                  ],
+                                                  ),
+                                                  SizedBox(height: 5.0),
+                                                  Text(
+                                                    subtitles[index],
+                                                    style: TextStyle(
+                                                      color: Colors.grey[400],
+                                                      decoration:
+                                                          isCheckedList[index]
+                                                              ? TextDecoration
+                                                                  .lineThrough
+                                                              : null,
+                                                      fontStyle:
+                                                          isCheckedList[index]
+                                                              ? FontStyle.italic
+                                                              : FontStyle
+                                                                  .normal,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 10),
+                                                  Text(
+                                                    'Создано: $formattedDate',
+                                                    style: TextStyle(
+                                                      color: Colors.grey[400],
+                                                      fontSize: 10.0,
+                                                      fontStyle:
+                                                          FontStyle.italic,
+                                                      decoration:
+                                                          isCheckedList[index]
+                                                              ? TextDecoration
+                                                                  .lineThrough
+                                                              : null,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            IconButton(
+                                              icon: Icon(Icons.delete,
+                                                  color: Color.fromARGB(
+                                                      255, 143, 10, 0)),
+                                              onPressed: () {
+                                                showDialog(
+                                                  context: context,
+                                                  builder:
+                                                      (BuildContext context) {
+                                                    return AlertDialog(
+                                                      backgroundColor:
+                                                          const Color.fromARGB(
+                                                              255, 22, 22, 22),
+                                                      title: Text(
+                                                        'Подтвердите удаление',
+                                                        style: TextStyle(
+                                                          color: Colors.white,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                        ),
+                                                      ),
+                                                      content: Text(
+                                                        'Вы действительно хотите удалить эту запись?',
+                                                        style: TextStyle(
+                                                            color:
+                                                                Colors.white),
+                                                      ),
+                                                      actions: [
+                                                        TextButton(
+                                                          child: Text('Отмена'),
+                                                          onPressed: () {
+                                                            Navigator.of(
+                                                                    context)
+                                                                .pop();
+                                                          },
+                                                        ),
+                                                        TextButton(
+                                                          child: Text(
+                                                            'Удалить',
+                                                            style: TextStyle(
+                                                                color:
+                                                                    Colors.red),
+                                                          ),
+                                                          onPressed: () {
+                                                            Navigator.of(
+                                                                    context)
+                                                                .pop();
+                                                            deleteRecord(index);
+                                                          },
+                                                        ),
+                                                      ],
+                                                    );
+                                                  },
                                                 );
                                               },
-                                            );
-                                          },
+                                            ),
+                                          ],
                                         ),
-                                      ],
-                                    ),
-                                  ),
-                                  Positioned(
-                                    top: 0,
-                                    bottom: 0,
-                                    left: 0,
-                                    child: DecoratedBox(
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.only(
-                                          topLeft: Radius.circular(10.0),
-                                          bottomLeft: Radius.circular(10.0),
-                                        ),
-                                        color: Color.fromARGB(255, 111, 0, 255),
                                       ),
-                                      child: SizedBox(width: 8.0),
-                                    ),
+                                      Positioned(
+                                        top: 0,
+                                        bottom: 0,
+                                        left: 0,
+                                        child: DecoratedBox(
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.only(
+                                              topLeft: Radius.circular(10.0),
+                                              bottomLeft: Radius.circular(10.0),
+                                            ),
+                                            color: Color.fromARGB(
+                                                255, 111, 0, 255),
+                                          ),
+                                          child: SizedBox(width: 8.0),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ],
-                              ),
-                            ),
-                          ));
-                    },
-                  ),
-            NotesPage()
-          ],
-          onPageChanged: (int index) {
-            setState(() {
-              _currentTabIndex = index;
-            });
-          },
-        ),
-      ]),
-      bottomNavigationBar: bottomNavBar,
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: isBottomSheetOpen
-            ? const Color.fromARGB(255, 255, 17, 0)
-            : Color.fromARGB(255, 111, 0, 255),
-        onPressed: () {
-          if (_currentTabIndex == 0) {
-            if (isBottomSheetOpen) {
-              Navigator.pop(context);
-            } else {
-              _titleController.clear();
-              _subtitleController.clear();
-            }
-            setState(() {
-              isBottomSheetOpen = !isBottomSheetOpen;
-            });
-
-            if (isBottomSheetOpen) {
-              _scaffoldKey.currentState
-                  ?.showBottomSheet(
-                    backgroundColor: Colors.grey[900],
-                    (ctx) => _buildBottomSheet(ctx),
-                  )
-                  .closed
-                  .whenComplete(() {
-                setState(() {
-                  isBottomSheetOpen = false;
-                });
-              });
-            }
-          } else {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => NoteDetailPage(
-                        noteId: ' ',
-                        jsonContent: ' ',
-                      )),
-            );
-          }
-        },
-        child: isBottomSheetOpen
-            ? Icon(
-                Icons.clear,
-                color: Colors.black,
-              )
-            : Icon(
-                Icons.favorite,
-                color: Colors.red,
-              ),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: Colors.grey[900],
-        shadowColor: Color.fromARGB(115, 0, 0, 0),
-        elevation: 4.0,
-        actions: [
-          Center(
-            child: Container(
-              margin: EdgeInsets.only(left: 20, right: 10),
-              child: Text(
-                _currentTabIndex == 0 ? 'Home' : 'Notes',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-          _currentTabIndex == 0
-              ? Expanded(
-                  child: Theme(
-                    data: ThemeData.dark(),
-                    child: SizedBox(
-                      child: TextField(
-                        focusNode: myFocusNode,
-                        onChanged: (value) {
-                          setState(() {
-                            searchKeyword = value;
-                          });
-                        },
-                        decoration: InputDecoration(
-                          hintText: 'Поиск',
-                          prefixIcon: Icon(Icons.search),
-                        ),
-                      ),
-                    ),
-                  ),
-                )
-              : Expanded(
-                  child: Container(),
-                ), // Добавил условие, чтобы избежать ошибки
-          AnimatedBuilder(
-            animation: _animationController,
-            builder: (BuildContext context, Widget? child) {
-              return Transform.rotate(
-                angle: _animation.value * 2 * 3.14159,
-                child: IconButton(
-                  icon: const Icon(
-                    Icons.refresh,
-                    color: Colors.blue,
-                  ),
-                  onPressed: _onRefreshPressed,
-                ),
-              );
+                                ),
+                              );
+                            },
+                          ),
+                    NotesPage()
+                  ],
+                  onPageChanged: (int index) {
+                    setState(() {
+                      _currentTabIndex = index;
+                    });
+                  },
+                );
+              }
             },
-          ),
-          IconButton(
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    backgroundColor: const Color.fromARGB(255, 22, 22, 22),
-                    title: Text(
-                      'Подтвердите выход',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    content: Text(
-                      'Вы действительно хотите выйти из своей учётной записи?',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                    actions: [
-                      TextButton(
-                        child: Text('Отмена'),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                      TextButton(
-                        child: Text(
-                          'Выход',
-                          style: TextStyle(color: Colors.red),
-                        ),
-                        onPressed: () {
-                          authService.signOut();
-                          Navigator.pushReplacement(
-                            context,
-                            PageRouteBuilder(
-                              transitionDuration: Duration(milliseconds: 500),
-                              pageBuilder:
-                                  (context, animation, secondaryAnimation) =>
-                                      AuthPage(),
-                              transitionsBuilder: (context, animation,
-                                  secondaryAnimation, child) {
-                                var begin = Offset(0.0, 1.0);
-                                var end = Offset.zero;
-                                var curve = Curves.ease;
-
-                                var tween = Tween(begin: begin, end: end)
-                                    .chain(CurveTween(curve: curve));
-
-                                return SlideTransition(
-                                  position: animation.drive(tween),
-                                  child: child,
-                                );
-                              },
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-            icon: Icon(Icons.exit_to_app_rounded),
-            color: Colors.red,
-          ),
-        ],
-      ),
-    );
+          )
+        ]),
+        bottomNavigationBar: bottomNavBar,
+        floatingActionButton: FloatingActionButtonHomePage(context),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        appBar: AppBarHomePage(context));
   }
 
   final _kBottmonNavBarItems = <BottomNavigationBarItem>[
@@ -485,20 +344,6 @@ class HomePageState extends State<HomePage>
         icon: Icon(Icons.pending_actions), label: 'Заметки'),
   ];
 
-  Future<void> loadTitlesAndSubtitles() async {
-    // Загрузка или обновление данных списков
-    final records = await firestoreService.getAllRecords();
-    setState(() {
-      titles = records.map((record) => record['Title'] as String).toList();
-      subtitles =
-          records.map((record) => record['Subtitle'] as String).toList();
-      dates = records.map((record) => record['Timestamp'] as int).toList();
-      recordIds = records.map((record) => record.id).toList();
-      isCheckedList =
-          records.map((record) => record['isChecked'] as bool).toList();
-    });
-  }
-
   @override
   void initState() {
     super.initState();
@@ -508,7 +353,6 @@ class HomePageState extends State<HomePage>
       duration: const Duration(milliseconds: 500),
     );
     _animation = Tween<double>(begin: 0, end: 1).animate(_animationController);
-    loadTitlesAndSubtitles();
   }
 
   @override
@@ -528,23 +372,18 @@ class HomePageState extends State<HomePage>
 
   void _onRefreshPressed() {
     // Обработка кнопки обновления данных
-    loadTitlesAndSubtitles();
     _startRotationAnimation();
   }
 
   void addRecord(String title, String subtitle) {
     // Добавить запись
-    firestoreService.addRecord(title, subtitle).then((_) {
-      loadTitlesAndSubtitles();
-    });
+    firestoreService.addRecord(title, subtitle).then((_) {});
   }
 
   void deleteRecord(int index) {
     // Удалить запись
     final recordIdToDelete = recordIds[index];
-    firestoreService.deleteRecordById(recordIdToDelete).then((_) {
-      loadTitlesAndSubtitles();
-    });
+    firestoreService.deleteRecordById(recordIdToDelete).then((_) {});
   }
 
   void editRecord(int index) {
@@ -647,21 +486,6 @@ class HomePageState extends State<HomePage>
     _subtitleController.clear();
   }
 
-  // Метод для фильтрации списка по ключевому слову
-  List<int> filterList() {
-    List<int> filteredIndexes = [];
-    for (int i = 0; i < titles.length; i++) {
-      if (titles[i].toLowerCase().contains(searchKeyword.toLowerCase()) ||
-          subtitles[i].toLowerCase().contains(searchKeyword.toLowerCase())) {
-        filteredIndexes.add(i);
-      }
-    }
-    if (searchKeyword.isEmpty) {
-      myFocusNode.unfocus();
-    }
-    return filteredIndexes;
-  }
-
   // Нижняя панель добавления ---------------------------------------------------
   Container _buildBottomSheet(BuildContext context) {
     return Container(
@@ -735,113 +559,184 @@ class HomePageState extends State<HomePage>
       ),
     );
   }
-}
 
-class SideDrawer extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Drawer(
-      surfaceTintColor: Color.fromARGB(0, 0, 0, 0),
-      backgroundColor: Color.fromARGB(255, 29, 29, 29),
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: <Widget>[
-          UserAccountsDrawerHeader(
-            decoration: BoxDecoration(
-              color: Color.fromARGB(255, 24, 24, 24),
-            ),
-            accountName: Text(
-              'Дата регистрации: ${FirebaseAuth.instance.currentUser?.metadata.creationTime != null ? DateFormat('yyyy-MM-dd HH:mm:ss').format(FirebaseAuth.instance.currentUser!.metadata.creationTime!.toLocal()) : "Неизвестно"}', // Отображение даты регистрации
-              style: TextStyle(fontSize: 14),
-            ),
-            accountEmail: Text(FirebaseAuth.instance.currentUser?.email ?? ''),
-            currentAccountPicture: CircleAvatar(
-              backgroundColor: Color.fromARGB(255, 111, 0, 255),
-              child: Icon(
-                Icons.person,
-                size: 35,
+  AppBar AppBarHomePage(BuildContext context) {
+    return AppBar(
+      automaticallyImplyLeading: false,
+      backgroundColor: Colors.grey[900],
+      shadowColor: Color.fromARGB(115, 0, 0, 0),
+      elevation: 4.0,
+      actions: [
+        Center(
+          child: Container(
+            margin: EdgeInsets.only(left: 20, right: 10),
+            child: Text(
+              _currentTabIndex == 0 ? 'Home' : 'Notes',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
               ),
             ),
           ),
-          ListTile(
-            leading: Icon(
-              Icons.settings,
-              color: Color.fromARGB(255, 95, 95, 95),
-            ), // Значок настроек
-            title: Text(
-              'Настройки',
-              style: TextStyle(color: Colors.white),
-            ),
-            onTap: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => SettingsPage()));
-            },
-          ),
-          ListTile(
-            leading: Icon(
-              Icons.analytics_outlined,
-              color: Color.fromARGB(255, 95, 95, 95),
-            ), // Значок настроек
-            title: Text(
-              'Статистика',
-              style: TextStyle(color: Colors.white),
-            ),
-            onTap: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => StatisticPage()));
-            },
-          ),
+        ),
+        _currentTabIndex == 0
+            ? Expanded(
+                child: Theme(
+                  data: ThemeData.dark(),
+                  child: SizedBox(
+                    child: TextField(
+                      focusNode: myFocusNode,
+                      onChanged: (value) {
+                        setState(() {
+                          searchKeyword = value;
+                        });
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Поиск',
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                    ),
+                  ),
+                ),
+              )
+            : Expanded(
+                child: Container(),
+              ), // Добавил условие, чтобы избежать ошибки
+        AnimatedBuilder(
+          animation: _animationController,
+          builder: (BuildContext context, Widget? child) {
+            return Transform.rotate(
+              angle: _animation.value * 2 * 3.14159,
+              child: IconButton(
+                icon: const Icon(
+                  Icons.auto_delete_outlined,
+                  color: Colors.blue,
+                ),
+                onPressed: _onRefreshPressed,
+              ),
+            );
+          },
+        ),
+        IconButton(
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  backgroundColor: const Color.fromARGB(255, 22, 22, 22),
+                  title: Text(
+                    'Подтвердите выход',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  content: Text(
+                    'Вы действительно хотите выйти из своей учётной записи?',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  actions: [
+                    TextButton(
+                      child: Text('Отмена'),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                    TextButton(
+                      child: Text(
+                        'Выход',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                      onPressed: () {
+                        authService.signOut();
+                        Navigator.pushReplacement(
+                          context,
+                          PageRouteBuilder(
+                            transitionDuration: Duration(milliseconds: 500),
+                            pageBuilder:
+                                (context, animation, secondaryAnimation) =>
+                                    AuthPage(),
+                            transitionsBuilder: (context, animation,
+                                secondaryAnimation, child) {
+                              var begin = Offset(0.0, 1.0);
+                              var end = Offset.zero;
+                              var curve = Curves.ease;
 
-          // Добавьте другие пункты меню по необходимости
-        ],
-      ),
+                              var tween = Tween(begin: begin, end: end)
+                                  .chain(CurveTween(curve: curve));
+
+                              return SlideTransition(
+                                position: animation.drive(tween),
+                                child: child,
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+          icon: Icon(Icons.exit_to_app_rounded),
+          color: Colors.red,
+        ),
+      ],
     );
   }
-}
 
-class SnowfallAnimation extends StatefulWidget {
-  @override
-  _SnowfallAnimationState createState() => _SnowfallAnimationState();
-}
+  FloatingActionButton FloatingActionButtonHomePage(BuildContext context) {
+    return FloatingActionButton(
+      backgroundColor: isBottomSheetOpen
+          ? const Color.fromARGB(255, 255, 17, 0)
+          : Color.fromARGB(255, 111, 0, 255),
+      onPressed: () {
+        if (_currentTabIndex == 0) {
+          if (isBottomSheetOpen) {
+            Navigator.pop(context);
+          } else {
+            _titleController.clear();
+            _subtitleController.clear();
+          }
+          setState(() {
+            isBottomSheetOpen = !isBottomSheetOpen;
+          });
 
-class _SnowfallAnimationState extends State<SnowfallAnimation>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _controller = AnimationController(
-      duration: const Duration(seconds: 10),
-      vsync: this,
-    );
-
-    _animation = Tween<double>(begin: 0, end: 1).animate(_controller);
-
-    _controller.repeat();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(0, 100 * _animation.value),
-          child: Icon(
-            Icons.ac_unit,
-            color: Colors.white,
-          ),
-        );
+          if (isBottomSheetOpen) {
+            _scaffoldKey.currentState
+                ?.showBottomSheet(
+                  backgroundColor: Colors.grey[900],
+                  (ctx) => _buildBottomSheet(ctx),
+                )
+                .closed
+                .whenComplete(() {
+              setState(() {
+                isBottomSheetOpen = false;
+              });
+            });
+          }
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => NoteDetailPage(
+                      noteId: ' ',
+                      jsonContent: ' ',
+                    )),
+          );
+        }
       },
+      child: isBottomSheetOpen
+          ? Icon(
+              Icons.clear,
+              color: Colors.black,
+            )
+          : Icon(
+              Icons.favorite,
+              color: Colors.red,
+            ),
     );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
   }
 }
