@@ -22,7 +22,8 @@ class StatisticPage extends StatelessWidget {
           padding: const EdgeInsets.all(16.0),
           child: StreamBuilder<List<DocumentSnapshot>>(
             initialData: initialRecords,
-            stream: UserService().getAllRecordsStream(),
+            stream: UserService().getAllRecordsStream(
+                currentSortType: SortType.date, currentAscending: true),
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                 final records = snapshot.data!;

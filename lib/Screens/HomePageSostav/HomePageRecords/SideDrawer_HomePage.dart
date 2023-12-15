@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:records_plus/Screens/HomePageSostav/Basket.dart';
 import 'package:records_plus/Screens/HomePageSostav/SettingsPage.dart';
 import 'package:records_plus/Screens/HomePageSostav/StatisticPage.dart';
 import 'package:records_plus/Services/UserService.dart';
@@ -66,6 +67,29 @@ class SideDrawer extends StatelessWidget {
                 MaterialPageRoute(
                   builder: (context) =>
                       StatisticPage(initialRecords: initialRecord),
+                ),
+              );
+            },
+          ),
+          ListTile(
+            leading: Icon(
+              Icons.auto_delete_outlined,
+              color: Color.fromARGB(255, 95, 95, 95),
+            ), // Значок настроек
+            title: Text(
+              'Корзина',
+              style: TextStyle(color: Colors.white),
+            ),
+            onTap: () async {
+              var userService = UserService();
+              List<DocumentSnapshot<Object?>> initialRecord =
+                  await userService.getAllRecords();
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => BascetPage(
+                    initialRecords: initialRecord,
+                  ),
                 ),
               );
             },
