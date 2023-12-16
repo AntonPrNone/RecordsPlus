@@ -1,18 +1,20 @@
-// ignore_for_file: prefer_const_constructors, file_names, use_key_in_widget_constructors, use_build_context_synchronously
+// ignore_for_file: prefer_const_constructors, file_names, use_key_in_widget_constructors, use_build_context_synchronously, must_be_immutable
 
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
-
-import '../../Services/UserService.dart';
+import '../../../Services/UserService.dart';
 
 class NoteDetailPage extends StatelessWidget {
   final UserService userService = UserService();
   String noteId;
   final String jsonContent;
+  String formattedDateEdit;
 
-  NoteDetailPage({required this.noteId, required this.jsonContent});
+  NoteDetailPage(
+      {required this.noteId,
+      required this.jsonContent,
+      required this.formattedDateEdit});
 
   @override
   Widget build(BuildContext context) {
@@ -113,10 +115,26 @@ class NoteDetailPage extends StatelessWidget {
           ),
           child: Column(
             children: [
+              SizedBox(
+                height: 80,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Container(
+                    margin: EdgeInsets.only(left: 10, right: 10),
+                    child: Text(
+                      'Изменено: $formattedDateEdit',
+                      style: TextStyle(
+                        color: Colors.grey[800],
+                        fontSize: 12.0,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
               Expanded(
                 child: Padding(
-                  padding:
-                      EdgeInsets.only(top: 80, left: 10, right: 10, bottom: 10),
+                  padding: EdgeInsets.only(left: 10, right: 10, bottom: 10),
                   child: QuillEditor.basic(
                     configurations: const QuillEditorConfigurations(
                       readOnly: false,

@@ -87,6 +87,7 @@ class UserService {
       return records;
     });
   }
+
   Future<void> saveSortSettings(
       SortType currentSortType, bool currentAscending) async {
     try {
@@ -193,6 +194,28 @@ class UserService {
         .collection('Records')
         .doc(recordId)
         .delete();
+  }
+
+  Future<void> deleteRecordsWithIsDeleted() async {
+    try {
+      if (user != null) {
+        QuerySnapshot recordsSnapshot = await usersCollection
+            .doc(user!.uid)
+            .collection('Records')
+            .where('isDeleted', isEqualTo: true)
+            .get();
+
+        WriteBatch batch = FirebaseFirestore.instance.batch();
+
+        for (QueryDocumentSnapshot record in recordsSnapshot.docs) {
+          batch.delete(record.reference);
+        }
+
+        await batch.commit();
+      }
+    } catch (e) {
+      print('Error deleting records with isDeleted: $e');
+    }
   }
 
   Future<void> softDeleteRecordById(String recordId) async {
@@ -321,11 +344,18 @@ class UserService {
 
       if (noteSnapshot.exists) {
         // Если документ существует, обновляем его содержимое
-        await noteDocRef.update({'content': quillContent});
+        await noteDocRef.update({
+          'content': quillContent,
+          'editAt': DateTime.now().toUtc().millisecondsSinceEpoch
+        });
       } else {
         // Если документ не существует, создаем новый документ с уникальным идентификатором
         final newNoteDocRef = userDocRef.collection('Notes').doc();
-        await newNoteDocRef.set({'content': quillContent});
+        await newNoteDocRef.set({
+          'content': quillContent,
+          'createdAt': DateTime.now().toUtc().millisecondsSinceEpoch,
+          'editAt': DateTime.now().toUtc().millisecondsSinceEpoch
+        });
 
         // Возвращаем идентификатор нового документа
         return newNoteDocRef.id;
@@ -340,18 +370,38 @@ class UserService {
   }
 
   Stream<List<Map<String, dynamic>>> get quillContentStream {
-    return usersCollection
-        .doc(user?.uid)
-        .collection('Notes')
-        .snapshots()
-        .map((querySnapshot) {
-      // Преобразование списка документов в список содержимого и их идентификаторов
-      return querySnapshot.docs.map((doc) {
+    Query query =
+        usersCollection.doc(user?.uid).collection('Notes').orderBy('createdAt');
+
+    return query.snapshots().map((querySnapshot) {
+      List<Map<String, dynamic>> notes = querySnapshot.docs.map((doc) {
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+
+        // Добавим поле createdAt со значением текущей даты, если его нет
+        if (!data.containsKey('createdAt')) {
+          doc.reference.update({
+            'createdAt': DateTime.now().toUtc().millisecondsSinceEpoch,
+          });
+          data['createdAt'] = DateTime.now().toUtc().millisecondsSinceEpoch;
+        }
+
+        // Добавим поле editAt со значением текущей даты, если его нет
+        if (!data.containsKey('editAt')) {
+          doc.reference.update({
+            'editAt': data['createdAt'],
+          });
+          data['editAt'] = data['createdAt'];
+        }
+
         return {
           'id': doc.id,
-          'content': doc['content'] as String,
+          'content': data['content'] as String,
+          'createdAt': data['createdAt'],
+          'editAt': data['editAt'],
         };
       }).toList();
+
+      return notes;
     });
   }
 

@@ -3,11 +3,12 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
-import 'package:records_plus/AppState.dart';
+import 'package:records_plus/Model/AppState.dart';
+import 'package:records_plus/Model/Settings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
-import 'Screens/AuthPage.dart';
-import 'Screens/HomePage.dart';
+import 'Screens/Auth/AuthPage.dart';
+import 'Screens/HomePageSostav/RecordPage/HomePage.dart';
 
 void main() async {
   await initializeDateFormatting('ru', null);
@@ -18,6 +19,8 @@ void main() async {
 
   final prefs = await SharedPreferences.getInstance();
   final backgroundImage = prefs.getString('backgroundImage');
+
+  await SettingsCustom.getSortSettings();
 
   runApp(
     ChangeNotifierProvider(

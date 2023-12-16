@@ -5,7 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:records_plus/AppState.dart';
+import 'package:records_plus/Model/AppState.dart';
 import 'package:records_plus/Screens/HomePageSostav/EmptyPage.dart';
 import '/Services/AuthService.dart';
 import '/Services/UserService.dart';
@@ -42,7 +42,6 @@ class BascetPageState extends State<BascetPage>
   ];
 
   String searchKeyword = '';
-  bool isBottomSheetOpen = false;
   FocusNode myFocusNode = FocusNode();
   UserService firestoreService = UserService();
   AuthService authService = AuthService();
@@ -64,6 +63,8 @@ class BascetPageState extends State<BascetPage>
     final appState = Provider.of<AppState>(context);
 
     return Scaffold(
+        floatingActionButton: FloatingActionButtonHomePage(context),
+        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
         key: _scaffoldKey,
         backgroundColor: Colors.grey[900],
         body: Stack(children: [
@@ -935,4 +936,71 @@ class BascetPageState extends State<BascetPage>
     });
   }
   // -------------------------------------------------------------------------
+
+  FloatingActionButton FloatingActionButtonHomePage(BuildContext context) {
+    return FloatingActionButton(
+      backgroundColor: Color.fromARGB(255, 111, 0, 255),
+      onPressed: () {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              backgroundColor: const Color.fromARGB(255, 22, 22, 22),
+              title: Text(
+                'Подтвердите удаление',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              content: RichText(
+                text: TextSpan(
+                  children: const <TextSpan>[
+                    TextSpan(text: 'Вы действительно хотите '),
+                    TextSpan(
+                      text: 'безвозвратно ',
+                      style: TextStyle(color: Colors.redAccent),
+                    ),
+                    TextSpan(
+                      text: 'удалить ',
+                    ),
+                    TextSpan(
+                      text: 'все ',
+                      style: TextStyle(color: Colors.redAccent),
+                    ),
+                    TextSpan(
+                      text:
+                          'записи в корзине? Восстановить в будущем будет невозможно',
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  child: Text('Отмена'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+                TextButton(
+                  child: Text(
+                    'Удалить',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    firestoreService.deleteRecordsWithIsDeleted();
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+      child: Icon(
+        Icons.delete_forever,
+        color: Colors.red,
+      ),
+    );
+  }
 }

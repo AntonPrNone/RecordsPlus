@@ -3,9 +3,9 @@ import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import '../RandomPointsPainter.dart';
+import '../../Model/RandomPointsPainter.dart';
 import '/Services/AuthService.dart';
-import 'HomePage.dart';
+import '../HomePageSostav/RecordPage/HomePage.dart';
 
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});

@@ -4,14 +4,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:records_plus/AppState.dart';
+import 'package:records_plus/Model/AppState.dart';
 import 'package:records_plus/Screens/HomePageSostav/EmptyPage.dart';
-import 'package:records_plus/Screens/HomePageSostav/HomePageRecords/SideDrawer_HomePage.dart';
-import 'package:records_plus/Screens/HomePageSostav/NotesPage.dart';
-import 'AuthPage.dart';
+import 'package:records_plus/Screens/HomePageSostav/SideDrawer/SideDrawer_HomePage.dart';
+import 'package:records_plus/Screens/HomePageSostav/NotePage/NotesPage.dart';
+import 'package:records_plus/Model/Settings.dart';
+import '../../Auth/AuthPage.dart';
 import '/Services/AuthService.dart';
 import '/Services/UserService.dart';
-import 'HomePageSostav/NoteDetailPage.dart';
+import '../NoteDetailPage.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 class HomePage extends StatefulWidget {
@@ -37,8 +38,6 @@ class HomePageState extends State<HomePage>
     // Добавьте другие цвета по вашему выбору
   ];
 
-  SortType currentSortType = SortType.date; // Изначально сортируем по заголовку
-  bool currentAscending = true; // Изначально по возрастанию
   int _currentTabIndex = 0;
   String searchKeyword = '';
   bool isBottomSheetOpen = false;
@@ -102,8 +101,8 @@ class HomePageState extends State<HomePage>
           ),
           StreamBuilder<List<DocumentSnapshot>>(
             stream: UserService().getAllRecordsStream(
-              currentSortType: currentSortType,
-              currentAscending: currentAscending,
+              currentSortType: SettingsCustom.currentSortType!,
+              currentAscending: SettingsCustom.currentAscending!,
             ),
             builder: (BuildContext context,
                 AsyncSnapshot<List<DocumentSnapshot>> snapshot) {
@@ -366,7 +365,6 @@ class HomePageState extends State<HomePage>
 
   @override
   void initState() {
-    getSortSettings();
     super.initState();
     _pageController = PageController(initialPage: _currentTabIndex);
   }
@@ -975,9 +973,7 @@ class HomePageState extends State<HomePage>
             context,
             MaterialPageRoute(
                 builder: (context) => NoteDetailPage(
-                      noteId: ' ',
-                      jsonContent: ' ',
-                    )),
+                    noteId: ' ', jsonContent: ' ', formattedDateEdit: ' ')),
           );
         }
       },
@@ -1126,18 +1122,11 @@ class HomePageState extends State<HomePage>
 
   Future<void> saveSortSettings(BuildContext context, int sortValue) async {
     setState(() {
-      currentSortType = SortType.values[sortValue ~/ 2];
-      currentAscending = sortValue % 2 == 1;
+      SettingsCustom.currentSortType = SortType.values[sortValue ~/ 2];
+      SettingsCustom.currentAscending = sortValue % 2 == 1;
     });
-    await UserService().saveSortSettings(currentSortType, currentAscending);
-  }
-
-  Future<void> getSortSettings() async {
-    Map<String, dynamic> sortSettings = await UserService().getSortSettings();
-    setState(() {
-      currentSortType = SortType.values[sortSettings['currentSortType'] ?? 0];
-      currentAscending = sortSettings['currentAscending'] ?? true;
-    });
+    await UserService().saveSortSettings(
+        SettingsCustom.currentSortType!, SettingsCustom.currentAscending!);
   }
   // -------------------------------------------------------------------------
 }

@@ -4,9 +4,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:records_plus/Screens/HomePageSostav/Basket.dart';
-import 'package:records_plus/Screens/HomePageSostav/SettingsPage.dart';
-import 'package:records_plus/Screens/HomePageSostav/StatisticPage.dart';
+import 'package:records_plus/Screens/HomePageSostav/SideDrawer/Basket.dart';
+import 'package:records_plus/Screens/HomePageSostav/SideDrawer/SettingsPage.dart';
+import 'package:records_plus/Screens/HomePageSostav/SideDrawer/StatisticPage.dart';
 import 'package:records_plus/Services/UserService.dart';
 
 class SideDrawer extends StatelessWidget {
