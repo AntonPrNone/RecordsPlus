@@ -94,16 +94,16 @@ class AuthPageState extends State<AuthPage> {
         child: SizedBox(
           child: AnimatedTextKit(animatedTexts: [
             ColorizeAnimatedText(
-              'Records',
+              'Notepad',
               textStyle: colorizeTextStyle,
               colors: colorizeColors,
             ),
             ColorizeAnimatedText(
-              'Plus',
+              'Digital',
               textStyle: colorizeTextStyle,
               colors: colorizeColors,
             ),
-            ColorizeAnimatedText('Records+',
+            ColorizeAnimatedText('NotepadDG',
                 textStyle: colorizeTextStyle,
                 colors: colorizeColors,
                 speed: const Duration(milliseconds: 500)),
@@ -143,7 +143,7 @@ class AuthPageState extends State<AuthPage> {
                   true),
             ),
             const SizedBox(
-              height: 20,
+              height: 30,
             ),
             Padding(
               padding: const EdgeInsets.only(right: 20, left: 20),
@@ -188,55 +188,55 @@ class AuthPageState extends State<AuthPage> {
     );
   }
 
-Widget inputLogin(Icon icon, String hint, TextEditingController controller, bool obscure) {
-  return Container(
-    padding: const EdgeInsets.only(left: 20, right: 20),
-    child: TextFormField(
-      controller: controller,
-      obscureText: obscure && obscurePassword,
-      style: const TextStyle(fontSize: 20, color: Colors.white),
-      decoration: InputDecoration(
-        hintStyle: const TextStyle(
-            fontWeight: FontWeight.bold, fontSize: 20, color: Colors.white30),
-        hintText: hint,
-        focusedBorder: const OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.white, width: 3)),
-        enabledBorder: const OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.white54, width: 1)),
-        prefixIcon: Padding(
-          padding: const EdgeInsets.only(left: 10, right: 10),
-          child: IconTheme(
-            data: const IconThemeData(color: Colors.white),
-            child: icon,
+  Widget inputLogin(
+      Icon icon, String hint, TextEditingController controller, bool obscure) {
+    return Container(
+      padding: const EdgeInsets.only(left: 20, right: 20),
+      child: TextFormField(
+        controller: controller,
+        obscureText: obscure && obscurePassword,
+        style: const TextStyle(fontSize: 20, color: Colors.white),
+        decoration: InputDecoration(
+          hintStyle: const TextStyle(
+              fontWeight: FontWeight.bold, fontSize: 20, color: Colors.white30),
+          hintText: hint,
+          focusedBorder: const OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.white, width: 3)),
+          enabledBorder: const OutlineInputBorder(
+              borderSide: BorderSide(color: Colors.white54, width: 1)),
+          prefixIcon: Padding(
+            padding: const EdgeInsets.only(left: 10, right: 10),
+            child: IconTheme(
+              data: const IconThemeData(color: Colors.white),
+              child: icon,
+            ),
           ),
+          suffixIcon: obscure
+              ? IconButton(
+                  icon: Icon(
+                    obscurePassword ? Icons.visibility : Icons.visibility_off,
+                    color: Colors.white,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      obscurePassword = !obscurePassword;
+                    });
+                  },
+                )
+              : null,
         ),
-        suffixIcon: obscure
-            ? IconButton(
-                icon: Icon(
-                  obscurePassword ? Icons.visibility : Icons.visibility_off,
-                  color: Colors.white,
-                ),
-                onPressed: () {
-                  setState(() {
-                    obscurePassword = !obscurePassword;
-                  });
-                },
-              )
-            : null,
+        onFieldSubmitted: (value) async {
+          if (value.isNotEmpty) {
+            // Выполнить проверку данных, если поле не пустое
+            authButtonAction(await authService.signInWithEmailAndPassword(
+              emailController.text.trim(),
+              passwordController.text.trim(),
+            ));
+          }
+        },
       ),
-      onFieldSubmitted: (value) async {
-        if (value.isNotEmpty) {
-          // Выполнить проверку данных, если поле не пустое
-          authButtonAction(await authService.signInWithEmailAndPassword(
-            emailController.text.trim(),
-            passwordController.text.trim(),
-          ));
-        }
-      },
-    ),
-  );
-}
-
+    );
+  }
 
   Widget button(String text, void Function() func) {
     // Кнопка авторизации

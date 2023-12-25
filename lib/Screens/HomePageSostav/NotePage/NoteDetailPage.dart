@@ -46,7 +46,7 @@ class NoteDetailPage extends StatelessWidget {
                       ),
                     ),
                     content: Text(
-                      'Вы действительно хотите удалить эту запись?',
+                      'Вы действительно хотите удалить эту заметку?',
                       style: TextStyle(color: Colors.white),
                     ),
                     actions: [
@@ -77,9 +77,9 @@ class NoteDetailPage extends StatelessWidget {
                 },
               );
             },
-            child: Icon(Icons.delete),
             backgroundColor: Colors.red,
             heroTag: null,
+            child: Icon(Icons.delete),
           ),
           SizedBox(width: 8),
           FloatingActionButton(
@@ -87,16 +87,14 @@ class NoteDetailPage extends StatelessWidget {
               // Получаем контент Quill в формате JSON
               final quillContent =
                   jsonEncode(quillController.document.toDelta().toJson());
-
               var res = await userService.saveQuillContentToFirestore(
                   noteId, quillContent);
               if (noteId == " ") {
                 noteId = res!;
               }
-
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Content saved to Firestore!'),
+                  content: Text('Заметка сохранена!'),
                 ),
               );
             },

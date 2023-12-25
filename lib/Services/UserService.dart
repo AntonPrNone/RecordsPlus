@@ -85,7 +85,7 @@ class UserService {
       }
 
       return records;
-    });
+    }).asBroadcastStream();
   }
 
   Future<void> saveSortSettings(
@@ -125,6 +125,21 @@ class UserService {
       print('Error getting sort settings: $e');
       return {};
     }
+  }
+
+  Stream<Map<String, dynamic>> streamSortSettings() {
+    return usersCollection
+        .doc(user?.uid)
+        .collection('Settings')
+        .doc('Global')
+        .snapshots()
+        .map<Map<String, dynamic>>((documentSnapshot) {
+      if (documentSnapshot.exists) {
+        return documentSnapshot.data() as Map<String, dynamic>;
+      } else {
+        return {};
+      }
+    }).asBroadcastStream();
   }
 
   String _getOrderByField(SortType sortType) {
@@ -280,7 +295,8 @@ class UserService {
     return totalSubtitleLength / records.length;
   }
 
-  List<String> getFrequentKeywords(List<DocumentSnapshot> records) {
+  Future<Map<String, int>> getFrequentKeywords(
+      List<DocumentSnapshot> records) async {
     // Возвращает наиболее часто используемые ключевые слова из заголовков и подзаголовков
     Map<String, int> keywordCountMap = {};
 
@@ -295,22 +311,33 @@ class UserService {
       // Разделяем объединенный текст на слова
       List<String> keywords = combinedText.split(' ');
 
+      // Считаем частоту использования слов
       for (String keyword in keywords) {
         keywordCountMap[keyword] = (keywordCountMap[keyword] ?? 0) + 1;
       }
     }
 
+    // Фильтруем только те ключевые слова, которые используются более одного раза
+    List<String> frequentKeywords = keywordCountMap.entries
+        .where((entry) => entry.value > 1)
+        .map((entry) => entry.key)
+        .toList();
+
     // Сортируем ключевые слова по частоте использования
-    List<String> frequentKeywords = keywordCountMap.keys.toList();
     frequentKeywords
         .sort((a, b) => keywordCountMap[b]!.compareTo(keywordCountMap[a]!));
 
     // Ограничиваем список наиболее часто используемых ключевых слов, например, 10 словами
     if (frequentKeywords.length > 10) {
-      frequentKeywords = frequentKeywords.sublist(0, 10);
+      frequentKeywords = frequentKeywords.take(10).toList();
     }
 
-    return frequentKeywords;
+    // Создаем новый Map с ограниченным списком ключевых слов и их частотой
+    Map<String, int> result = {};
+    for (String keyword in frequentKeywords) {
+      result[keyword] = keywordCountMap[keyword]!;
+    }
+    return result;
   }
 
   Future<Map<String, int>> getKeywordCounts(
@@ -401,8 +428,11 @@ class UserService {
         };
       }).toList();
 
+      notes.sort(
+          (a, b) => (a['createdAt'] as int).compareTo(b['createdAt'] as int));
+
       return notes;
-    });
+    }).asBroadcastStream();
   }
 
   Future<void> deleteNoteFromFirestore(String noteId) async {

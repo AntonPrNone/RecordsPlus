@@ -2,17 +2,18 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:records_plus/Model/AppState.dart';
 import 'package:records_plus/Screens/HomePageSostav/EmptyPage.dart';
+import 'package:records_plus/Screens/HomePageSostav/NotePage/NoteDetailPage.dart';
 import 'package:records_plus/Screens/HomePageSostav/SideDrawer/SideDrawer_HomePage.dart';
 import 'package:records_plus/Screens/HomePageSostav/NotePage/NotesPage.dart';
 import 'package:records_plus/Model/Settings.dart';
 import '../../Auth/AuthPage.dart';
 import '/Services/AuthService.dart';
 import '/Services/UserService.dart';
-import '../NoteDetailPage.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 class HomePage extends StatefulWidget {
@@ -99,255 +100,293 @@ class HomePageState extends State<HomePage>
                     fit: BoxFit.cover,
                   ),
           ),
-          StreamBuilder<List<DocumentSnapshot>>(
-            stream: UserService().getAllRecordsStream(
-              currentSortType: SettingsCustom.currentSortType!,
-              currentAscending: SettingsCustom.currentAscending!,
-            ),
-            builder: (BuildContext context,
-                AsyncSnapshot<List<DocumentSnapshot>> snapshot) {
-              if (snapshot.hasError) {
-                return Text('Произошла ошибка: ${snapshot.error}');
-              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return EmptyPage(firstText: 'записи');
-              } else {
-                // Очищаем коллекции перед обновлением
-                titles.clear();
-                subtitles.clear();
-                isCheckedList.clear();
-                dates.clear();
-                recordIds.clear();
-                recordColors.clear();
+          StreamBuilder<Map<String, dynamic>>(
+              stream: UserService().streamSortSettings(),
+              builder: (BuildContext context,
+                  AsyncSnapshot<Map<String, dynamic>> settingsSnapshot) {
+                if (settingsSnapshot.hasError) {
+                  return Text('Произошла ошибка: ${settingsSnapshot.error}');
+                } else {
+                  return StreamBuilder<List<DocumentSnapshot>>(
+                    stream: UserService().getAllRecordsStream(
+                      currentSortType: SortType.values[
+                          (settingsSnapshot.data?['currentSortType'] as int?) ??
+                              0],
+                      currentAscending: (settingsSnapshot
+                              .data?['currentAscending'] as bool?) ??
+                          true,
+                    ),
+                    builder: (BuildContext context,
+                        AsyncSnapshot<List<DocumentSnapshot>> recordsSnapshot) {
+                      // Очищаем коллекции перед обновлением
+                      titles.clear();
+                      subtitles.clear();
+                      isCheckedList.clear();
+                      dates.clear();
+                      recordIds.clear();
+                      recordColors.clear();
 
-                // Обновляем коллекции на основе новых данных
-                for (var recordSnapshot in snapshot.data!) {
-                  Map<String, dynamic> data =
-                      recordSnapshot.data() as Map<String, dynamic>;
-                  // Проверяем, соответствует ли запись ключевому слову
-                  if ((data['Title']
-                              .toLowerCase()
-                              .contains(searchKeyword.toLowerCase()) ||
-                          data['Subtitle']
-                              .toLowerCase()
-                              .contains(searchKeyword.toLowerCase())) &&
-                      data['isDeleted'] == false) {
-                    titles.add(data['Title']);
-                    subtitles.add(data['Subtitle']);
-                    isCheckedList.add(data['isChecked']);
-                    dates.add(data['Timestamp']);
-                    recordIds.add(recordSnapshot.id);
-                    recordColors.add(Color(data['Color']));
-                  }
-                }
-                return PageView(
-                  controller: _pageController,
-                  children: [
-                    titles.isEmpty
-                        ? EmptyPage(
-                            firstText: 'записи',
-                          )
-                        : ListView.builder(
-                            itemCount: titles.length,
-                            itemBuilder: (BuildContext context, int index) {
-                              final date = DateTime.fromMillisecondsSinceEpoch(
-                                  dates[index]);
-                              final formattedDate = DateFormat.yMMMMd('ru')
-                                  .add_jms()
-                                  .format(date);
+                      if (recordsSnapshot.hasError) {
+                        return Text(
+                            'Произошла ошибка: ${recordsSnapshot.error}');
+                      } else if (recordsSnapshot.hasData &&
+                          recordsSnapshot.data!.isNotEmpty) {
+                        // Обновляем коллекции на основе новых данных
+                        for (var recordSnapshot in recordsSnapshot.data!) {
+                          Map<String, dynamic> data =
+                              recordSnapshot.data() as Map<String, dynamic>;
+                          // Проверяем, соответствует ли запись ключевому слову
+                          if ((data['Title']
+                                      .toLowerCase()
+                                      .contains(searchKeyword.toLowerCase()) ||
+                                  data['Subtitle']
+                                      .toLowerCase()
+                                      .contains(searchKeyword.toLowerCase())) &&
+                              data['isDeleted'] == false) {
+                            titles.add(data['Title']);
+                            subtitles.add(data['Subtitle']);
+                            isCheckedList.add(data['isChecked']);
+                            dates.add(data['Timestamp']);
+                            recordIds.add(recordSnapshot.id);
+                            recordColors.add(Color(data['Color']));
+                          }
+                        }
+                      }
+                      return PageView(
+                        controller: _pageController,
+                        children: [
+                          titles.isEmpty
+                              ? EmptyPage(
+                                  firstText: 'задачи',
+                                )
+                              : ListView.builder(
+                                  itemCount: titles.length,
+                                  itemBuilder:
+                                      (BuildContext context, int index) {
+                                    final date =
+                                        DateTime.fromMillisecondsSinceEpoch(
+                                            dates[index]);
+                                    final formattedDate =
+                                        DateFormat.yMMMMd('ru')
+                                            .add_jms()
+                                            .format(date);
 
-                              return Card(
-                                surfaceTintColor: Color.fromARGB(0, 0, 0, 0),
-                                color: Color.fromARGB(150, 20, 20, 20),
-                                margin: const EdgeInsets.all(10.0),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10.0),
-                                ),
-                                elevation: 4.0,
-                                child: InkWell(
-                                  onTap: () {
-                                    editRecord(index, recordColors[index]);
-                                  },
-                                  child: Stack(
-                                    children: [
-                                      Padding(
-                                        padding: EdgeInsets.only(
-                                            top: 10, bottom: 10, right: 10),
-                                        child: Row(
+                                    return Card(
+                                      surfaceTintColor:
+                                          Color.fromARGB(0, 0, 0, 0),
+                                      color: Color.fromARGB(150, 20, 20, 20),
+                                      margin: const EdgeInsets.all(10.0),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(10.0),
+                                      ),
+                                      elevation: 4.0,
+                                      child: InkWell(
+                                        onTap: () {
+                                          editRecord(
+                                              index, recordColors[index]);
+                                        },
+                                        child: Stack(
                                           children: [
-                                            Checkbox(
-                                              value: isCheckedList[index],
-                                              onChanged: (bool? value) {
-                                                setState(() {
-                                                  isCheckedList[index] =
-                                                      value ?? false;
-                                                  firestoreService
-                                                      .updateCheckboxState(
-                                                    recordIds[index],
-                                                    isCheckedList[index],
-                                                  );
-                                                });
-                                              },
-                                            ),
-                                            SizedBox(width: 10.0),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
+                                            Padding(
+                                              padding: EdgeInsets.only(
+                                                  top: 10,
+                                                  bottom: 10,
+                                                  right: 10),
+                                              child: Row(
                                                 children: [
-                                                  RichText(
-                                                    text: TextSpan(
-                                                      text: titles[index],
-                                                      style: TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        fontSize: 16.0,
-                                                        color:
-                                                            isCheckedList[index]
-                                                                ? Colors
-                                                                    .grey[400]
-                                                                : null,
-                                                        decoration:
-                                                            isCheckedList[index]
+                                                  Checkbox(
+                                                    value: isCheckedList[index],
+                                                    onChanged: (bool? value) {
+                                                      setState(() {
+                                                        isCheckedList[index] =
+                                                            value ?? false;
+                                                        firestoreService
+                                                            .updateCheckboxState(
+                                                          recordIds[index],
+                                                          isCheckedList[index],
+                                                        );
+                                                      });
+                                                    },
+                                                  ),
+                                                  SizedBox(width: 10.0),
+                                                  Expanded(
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        RichText(
+                                                          text: TextSpan(
+                                                            text: titles[index],
+                                                            style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              fontSize: 16.0,
+                                                              color: isCheckedList[
+                                                                      index]
+                                                                  ? Colors
+                                                                      .grey[400]
+                                                                  : null,
+                                                              decoration: isCheckedList[
+                                                                      index]
+                                                                  ? TextDecoration
+                                                                      .lineThrough
+                                                                  : TextDecoration
+                                                                      .none,
+                                                              fontStyle:
+                                                                  isCheckedList[
+                                                                          index]
+                                                                      ? FontStyle
+                                                                          .italic
+                                                                      : FontStyle
+                                                                          .normal,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        SizedBox(height: 5.0),
+                                                        Text(
+                                                          subtitles[index],
+                                                          style: TextStyle(
+                                                            color: Colors
+                                                                .grey[400],
+                                                            decoration: isCheckedList[
+                                                                    index]
                                                                 ? TextDecoration
                                                                     .lineThrough
-                                                                : TextDecoration
-                                                                    .none,
-                                                        fontStyle:
-                                                            isCheckedList[index]
-                                                                ? FontStyle
-                                                                    .italic
-                                                                : FontStyle
-                                                                    .normal,
-                                                      ),
+                                                                : null,
+                                                            fontStyle:
+                                                                isCheckedList[
+                                                                        index]
+                                                                    ? FontStyle
+                                                                        .italic
+                                                                    : FontStyle
+                                                                        .normal,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                            height: 10),
+                                                        Text(
+                                                          'Создано: $formattedDate',
+                                                          style: TextStyle(
+                                                            color: Colors
+                                                                .grey[400],
+                                                            fontSize: 10.0,
+                                                            fontStyle: FontStyle
+                                                                .italic,
+                                                            decoration: isCheckedList[
+                                                                    index]
+                                                                ? TextDecoration
+                                                                    .lineThrough
+                                                                : null,
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ),
                                                   ),
-                                                  SizedBox(height: 5.0),
-                                                  Text(
-                                                    subtitles[index],
-                                                    style: TextStyle(
-                                                      color: Colors.grey[400],
-                                                      decoration:
-                                                          isCheckedList[index]
-                                                              ? TextDecoration
-                                                                  .lineThrough
-                                                              : null,
-                                                      fontStyle:
-                                                          isCheckedList[index]
-                                                              ? FontStyle.italic
-                                                              : FontStyle
-                                                                  .normal,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 10),
-                                                  Text(
-                                                    'Создано: $formattedDate',
-                                                    style: TextStyle(
-                                                      color: Colors.grey[400],
-                                                      fontSize: 10.0,
-                                                      fontStyle:
-                                                          FontStyle.italic,
-                                                      decoration:
-                                                          isCheckedList[index]
-                                                              ? TextDecoration
-                                                                  .lineThrough
-                                                              : null,
-                                                    ),
+                                                  IconButton(
+                                                    icon: Icon(Icons.delete,
+                                                        color: Color.fromARGB(
+                                                            255, 143, 10, 0)),
+                                                    onPressed: () {
+                                                      showDialog(
+                                                        context: context,
+                                                        builder: (BuildContext
+                                                            context) {
+                                                          return AlertDialog(
+                                                            backgroundColor:
+                                                                const Color
+                                                                    .fromARGB(
+                                                                    255,
+                                                                    22,
+                                                                    22,
+                                                                    22),
+                                                            title: Text(
+                                                              'Подтвердите удаление',
+                                                              style: TextStyle(
+                                                                color: Colors
+                                                                    .white,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                              ),
+                                                            ),
+                                                            content: Text(
+                                                              'Вы действительно хотите удалить эту задачу?',
+                                                              style: TextStyle(
+                                                                  color: Colors
+                                                                      .white),
+                                                            ),
+                                                            actions: [
+                                                              TextButton(
+                                                                child: Text(
+                                                                    'Отмена'),
+                                                                onPressed: () {
+                                                                  Navigator.of(
+                                                                          context)
+                                                                      .pop();
+                                                                },
+                                                              ),
+                                                              TextButton(
+                                                                child: Text(
+                                                                  'Удалить',
+                                                                  style: TextStyle(
+                                                                      color: Colors
+                                                                          .red),
+                                                                ),
+                                                                onPressed: () {
+                                                                  Navigator.of(
+                                                                          context)
+                                                                      .pop();
+                                                                  softDeleteRecord(
+                                                                      index);
+                                                                },
+                                                              ),
+                                                            ],
+                                                          );
+                                                        },
+                                                      );
+                                                    },
                                                   ),
                                                 ],
                                               ),
                                             ),
-                                            IconButton(
-                                              icon: Icon(Icons.delete,
-                                                  color: Color.fromARGB(
-                                                      255, 143, 10, 0)),
-                                              onPressed: () {
-                                                showDialog(
-                                                  context: context,
-                                                  builder:
-                                                      (BuildContext context) {
-                                                    return AlertDialog(
-                                                      backgroundColor:
-                                                          const Color.fromARGB(
-                                                              255, 22, 22, 22),
-                                                      title: Text(
-                                                        'Подтвердите удаление',
-                                                        style: TextStyle(
-                                                          color: Colors.white,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                        ),
-                                                      ),
-                                                      content: Text(
-                                                        'Вы действительно хотите удалить эту запись?',
-                                                        style: TextStyle(
-                                                            color:
-                                                                Colors.white),
-                                                      ),
-                                                      actions: [
-                                                        TextButton(
-                                                          child: Text('Отмена'),
-                                                          onPressed: () {
-                                                            Navigator.of(
-                                                                    context)
-                                                                .pop();
-                                                          },
-                                                        ),
-                                                        TextButton(
-                                                          child: Text(
-                                                            'Удалить',
-                                                            style: TextStyle(
-                                                                color:
-                                                                    Colors.red),
-                                                          ),
-                                                          onPressed: () {
-                                                            Navigator.of(
-                                                                    context)
-                                                                .pop();
-                                                            softDeleteRecord(
-                                                                index);
-                                                          },
-                                                        ),
-                                                      ],
-                                                    );
-                                                  },
-                                                );
-                                              },
+                                            Positioned(
+                                              top: 0,
+                                              bottom: 0,
+                                              left: 0,
+                                              child: DecoratedBox(
+                                                decoration: BoxDecoration(
+                                                    borderRadius:
+                                                        BorderRadius.only(
+                                                      topLeft:
+                                                          Radius.circular(10.0),
+                                                      bottomLeft:
+                                                          Radius.circular(10.0),
+                                                    ),
+                                                    color: recordColors[index]),
+                                                child: SizedBox(width: 8.0),
+                                              ),
                                             ),
                                           ],
                                         ),
                                       ),
-                                      Positioned(
-                                        top: 0,
-                                        bottom: 0,
-                                        left: 0,
-                                        child: DecoratedBox(
-                                          decoration: BoxDecoration(
-                                              borderRadius: BorderRadius.only(
-                                                topLeft: Radius.circular(10.0),
-                                                bottomLeft:
-                                                    Radius.circular(10.0),
-                                              ),
-                                              color: recordColors[index]),
-                                          child: SizedBox(width: 8.0),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                    );
+                                  },
                                 ),
-                              );
-                            },
-                          ),
-                    NotesPage()
-                  ],
-                  onPageChanged: (int index) {
-                    setState(() {
-                      _currentTabIndex = index;
-                    });
-                  },
-                );
-              }
-            },
-          )
+                          NotesPage()
+                        ],
+                        onPageChanged: (int index) {
+                          setState(() {
+                            _currentTabIndex = index;
+                          });
+                        },
+                      );
+                    },
+                  );
+                }
+              })
         ]),
         bottomNavigationBar: bottomNavBar,
         floatingActionButton: FloatingActionButtonHomePage(context),
@@ -358,7 +397,7 @@ class HomePageState extends State<HomePage>
   final _kBottmonNavBarItems = <BottomNavigationBarItem>[
     // Нижняя панель-меню
     const BottomNavigationBarItem(
-        icon: Icon(Icons.notes_outlined), label: 'Записи'),
+        icon: Icon(Icons.notes_outlined), label: 'Задачи'),
     const BottomNavigationBarItem(
         icon: Icon(Icons.pending_actions), label: 'Заметки'),
   ];
@@ -405,7 +444,7 @@ class HomePageState extends State<HomePage>
           ),
           child: AlertDialog(
             title: Text(
-              'Редактирование записи',
+              'Редактирование задачи',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 18.0,
@@ -745,7 +784,6 @@ class HomePageState extends State<HomePage>
   // Нижняя панель добавления ---------------------------------------------------
   Container _buildBottomSheet(BuildContext context) {
     return Container(
-      height: 300,
       padding: const EdgeInsets.only(top: 16, bottom: 16, right: 8, left: 8),
       decoration: BoxDecoration(
         color: Colors.grey[900],
@@ -756,15 +794,26 @@ class HomePageState extends State<HomePage>
         data: ThemeData(
           brightness: Brightness.dark,
         ),
-        child: ListView(
-          children: <Widget>[
-            const ListTile(title: Text('Добавление записи')),
-            _buildTextField(_titleController, Icons.title, 'Заголовок'),
-            const SizedBox(height: 16),
-            _buildTextField(
-                _subtitleController, Icons.subtitles, 'Подзаголовок'),
-            const SizedBox(height: 16),
-            _buildSaveButton(context),
+        child: ShrinkWrappingViewport(
+          offset: ViewportOffset.zero(),
+          axisDirection: AxisDirection.down,
+          slivers: <Widget>[
+            SliverList(
+              delegate: SliverChildListDelegate(
+                [
+                  const ListTile(title: Text('Добавление задачи')),
+                  _buildTextField(_titleController, Icons.title, 'Заголовок'),
+                  const SizedBox(height: 16),
+                  _buildTextField(
+                    _subtitleController,
+                    Icons.subtitles,
+                    'Подзаголовок',
+                  ),
+                  const SizedBox(height: 16),
+                  _buildSaveButton(context),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -775,6 +824,8 @@ class HomePageState extends State<HomePage>
       TextEditingController controller, IconData icon, String labelText) {
     // Текстовые поля - Нижняя панель
     return TextField(
+      maxLines: 3,
+      minLines: 1,
       controller: controller,
       style: const TextStyle(color: Colors.white),
       decoration: InputDecoration(
@@ -836,7 +887,7 @@ class HomePageState extends State<HomePage>
           child: Container(
             margin: EdgeInsets.only(left: 0, right: 10),
             child: Text(
-              _currentTabIndex == 0 ? 'Home' : 'Notes',
+              _currentTabIndex == 0 ? 'Tasks' : 'Notes ',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -868,7 +919,7 @@ class HomePageState extends State<HomePage>
             : Expanded(
                 child: Container(),
               ), // Добавил условие, чтобы избежать ошибки
-        _buildSortIcon(),
+        _currentTabIndex == 0 ? _buildSortIcon() : Container(),
         IconButton(
           onPressed: () {
             showDialog(
@@ -983,7 +1034,7 @@ class HomePageState extends State<HomePage>
               color: Colors.black,
             )
           : Icon(
-              Icons.favorite,
+              Icons.favorite_border,
               color: Colors.red,
             ),
     );

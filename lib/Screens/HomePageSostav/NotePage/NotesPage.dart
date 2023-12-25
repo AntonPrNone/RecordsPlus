@@ -106,7 +106,10 @@ class NoteCard extends StatelessWidget {
                 width: 2.0,
               ),
               gradient: LinearGradient(
-                colors: [Color.fromARGB(128, 111, 0, 255), Colors.purple],
+                colors: [
+                  Color.fromARGB(128, 111, 0, 255),
+                  Color.fromARGB(150, 20, 20, 20)
+                ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -140,6 +143,13 @@ class NoteCard extends StatelessWidget {
                     color: Colors.grey[400],
                     fontSize: 10.0,
                     fontStyle: FontStyle.italic,
+                    shadows: [
+                      Shadow(
+                        offset: Offset(2.0, 2.0),
+                        blurRadius: 3.0,
+                        color: Colors.black.withOpacity(0.5),
+                      ),
+                    ],
                   ),
                 ),
               ],

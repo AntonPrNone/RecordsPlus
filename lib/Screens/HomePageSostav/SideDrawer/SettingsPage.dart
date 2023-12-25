@@ -21,8 +21,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Настройки'),
-        backgroundColor:
-            const Color.fromARGB(255, 25, 25, 25),
+        backgroundColor: const Color.fromARGB(255, 25, 25, 25),
         foregroundColor: Colors.white,
       ),
       body: Container(
@@ -33,65 +32,92 @@ class _SettingsPageState extends State<SettingsPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Фон приложения',
+                'Глобальные',
                 style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white), // Цвет текста
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
               SizedBox(height: 16),
-              Consumer<AppState>(
-                builder: (context, appState, child) {
-                  return ClipRRect(
-                    borderRadius: BorderRadius.circular(10.0),
-                    child: appState.backgroundImage != null &&
-                            File(appState.backgroundImage!.path).existsSync()
-                        ? Image.file(
-                            appState.backgroundImage!,
-                            height: 200,
-                            width: 100,
-                            fit: BoxFit.cover,
-                          )
-                        : Image.asset(
-                            'assets/imgs/bg2.jpg',
-                            height: 200,
-                            width: 100,
-                            fit: BoxFit.cover,
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16.0),
+                  color: Colors.black
+                      .withOpacity(0.5), // Полупрозрачный чёрный фон
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Фон приложения:',
+                        style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white), // Цвет текста
+                      ),
+                      SizedBox(height: 16),
+                      Consumer<AppState>(
+                        builder: (context, appState, child) {
+                          return ClipRRect(
+                            borderRadius: BorderRadius.circular(10.0),
+                            child: appState.backgroundImage != null &&
+                                    File(appState.backgroundImage!.path)
+                                        .existsSync()
+                                ? Image.file(
+                                    appState.backgroundImage!,
+                                    height: 200,
+                                    width: 100,
+                                    fit: BoxFit.cover,
+                                  )
+                                : Image.asset(
+                                    'assets/imgs/bg2.jpg',
+                                    height: 200,
+                                    width: 100,
+                                    fit: BoxFit.cover,
+                                  ),
+                          );
+                        },
+                      ),
+                      SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment:
+                            MainAxisAlignment.center, // Выравнивание по центру
+                        children: [
+                          ElevatedButton(
+                            onPressed: _pickImage,
+                            child: Text(
+                              'Выбрать изображение',
+                              style: TextStyle(
+                                color: Colors.white,
+                              ), // Цвет текста кнопки
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color.fromARGB(255, 99, 0,
+                                  156), // Цвет фона кнопки "Выбрать изображение"
+                            ),
                           ),
-                  );
-                },
-              ),
-              SizedBox(height: 16),
-              Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.center, // Выравнивание по центру
-                children: [
-                  ElevatedButton(
-                    onPressed: _pickImage,
-                    child: Text(
-                      'Выбрать изображение',
-                      style:
-                          TextStyle(color: Colors.white), // Цвет текста кнопки
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color.fromARGB(255, 99, 0,
-                          156), // Цвет фона кнопки "Выбрать изображение"
-                    ),
+                          SizedBox(width: 16),
+                          ElevatedButton(
+                            onPressed: _resetImage,
+                            child: Text(
+                              'Сброс',
+                              style: TextStyle(
+                                color: Colors.white,
+                              ), // Цвет текста кнопки "Сброс"
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color.fromARGB(
+                                  255, 99, 0, 156), // Цвет фона кнопки "Сброс"
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  SizedBox(width: 16),
-                  ElevatedButton(
-                    onPressed: _resetImage,
-                    child: Text(
-                      'Сброс',
-                      style: TextStyle(
-                          color: Colors.white), // Цвет текста кнопки "Сброс"
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color.fromARGB(
-                          255, 99, 0, 156), // Цвет фона кнопки "Сброс"
-                    ),
-                  ),
-                ],
+                ),
               ),
             ],
           ),

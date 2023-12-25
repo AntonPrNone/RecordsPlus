@@ -8,6 +8,7 @@ class StatisticPage extends StatelessWidget {
   final List<DocumentSnapshot> initialRecords;
 
   StatisticPage({required this.initialRecords});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -30,44 +31,69 @@ class StatisticPage extends StatelessWidget {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    StatisticWidget(
-                      title: 'Количество записей:',
-                      value: UserService().getRecordCount(records).toString(),
-                    ),
-                    const SizedBox(height: 20),
-                    StatisticWidget(
-                      title: 'Средняя длина заголовка:',
-                      value: UserService()
-                          .getAverageTitleLength(records)
-                          .toStringAsFixed(2),
-                    ),
-                    const SizedBox(height: 20),
-                    StatisticWidget(
-                      title: 'Средняя длина подзаголовка:',
-                      value: UserService()
-                          .getAverageSubtitleLength(records)
-                          .toStringAsFixed(2),
-                    ),
-                    const SizedBox(height: 20),
-                    FutureBuilder<Map<String, int>>(
-                      future: UserService().getKeywordCounts(records),
-                      builder: (context, snapshot) {
-                        final keywordCountMap = snapshot.data ?? {};
-                        final frequentKeywords = keywordCountMap.keys.toList();
-                        frequentKeywords.sort((a, b) =>
-                            keywordCountMap[b]!.compareTo(keywordCountMap[a]!));
-                        if (frequentKeywords.isNotEmpty) {
-                          return StatisticListWidget(
-                            title: 'Часто используемые ключевые слова:',
-                            keywords: frequentKeywords,
-                            keywordCountMap: keywordCountMap,
-                          );
-                        } else {
-                          return const Text('Нет данных',
-                              style:
-                                  TextStyle(fontSize: 18, color: Colors.white));
-                        }
-                      },
+                    // Обновленный раздел с записями
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(16.0),
+                      ),
+                      padding: EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Задачи',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          // Здесь размещаете ваше текущее содержимое
+                          StatisticWidget(
+                            title: 'Количество задач:',
+                            value: UserService()
+                                .getRecordCount(records)
+                                .toString(),
+                          ),
+                          const SizedBox(height: 20),
+                          StatisticWidget(
+                            title: 'Средняя длина заголовка:',
+                            value: UserService()
+                                .getAverageTitleLength(records)
+                                .toStringAsFixed(2),
+                          ),
+                          const SizedBox(height: 20),
+                          StatisticWidget(
+                            title: 'Средняя длина подзаголовка:',
+                            value: UserService()
+                                .getAverageSubtitleLength(records)
+                                .toStringAsFixed(2),
+                          ),
+                          const SizedBox(height: 20),
+                          FutureBuilder<Map<String, int>>(
+                            future: UserService().getFrequentKeywords(records),
+                            builder: (context, snapshot) {
+                              final keywordCountMap = snapshot.data ?? {};
+                              final frequentKeywords =
+                                  keywordCountMap.keys.toList();
+                              frequentKeywords.sort((a, b) =>
+                                  keywordCountMap[b]!
+                                      .compareTo(keywordCountMap[a]!));
+                              if (frequentKeywords.isNotEmpty) {
+                                return StatisticListWidget(
+                                  title: 'Часто используемые ключевые слова:',
+                                  keywords: frequentKeywords,
+                                  keywordCountMap: keywordCountMap,
+                                );
+                              } else {
+                                return Container();
+                              }
+                            },
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 );
@@ -183,7 +209,7 @@ class StatisticListWidget extends StatelessWidget {
                     word,
                     style: TextStyle(
                       fontSize: 14, // Уменьшенный размер текста
-                      color: Colors.redAccent,
+                      color: Colors.white,
                       shadows: <Shadow>[
                         Shadow(
                           color: Colors.black,
